@@ -2,6 +2,7 @@
 
 [![build-status-image]][travis]
 [![pypi-version]][pypi]
+[![Requirements Status](https://requires.io/github/aschn/drf-tracking/requirements.svg?branch=master)](https://requires.io/github/aschn/drf-tracking/requirements/?branch=master)
 
 ## Overview
 
@@ -9,9 +10,9 @@ Utils to log Django Rest Framework requests to the database
 
 ## Requirements
 
-* Python (2.7, 3.3, 3.4)
+* Python 2.7
 * Django (1.6, 1.7, 1.8)
-* Django REST Framework (2.4, 3.0, 3.1)
+* Django REST Framework (3.0, 3.1)
 
 ## Installation
 
