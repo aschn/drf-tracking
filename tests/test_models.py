@@ -57,3 +57,8 @@ class TestAPIRequestLog(TestCase):
     def test_default_response_ms(self):
         log = APIRequestLog.objects.create(remote_addr=self.ip, requested_at=now())
         self.assertEqual(log.response_ms, 0)
+
+    def test_data(self):
+        log = APIRequestLog.objects.create(remote_addr=self.ip, requested_at=now(),
+                                           data='test POST')
+        self.assertEqual(log.data, 'test POST')

@@ -1,10 +1,12 @@
 from django.contrib.auth.models import User
+from django.utils.timezone import now
 from rest_framework import generics, authentication
 from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
 from rest_framework.response import Response
 from rest_framework_tracking.models import APIRequestLog
 from rest_framework_tracking.mixins import LoggingMixin
 import pytest
+import time
 
 
 pytestmark = pytest.mark.django_db
@@ -17,6 +19,12 @@ class MockNoLoggingView(generics.GenericAPIView):
 
 class MockLoggingView(LoggingMixin, generics.GenericAPIView):
     def get(self, request):
+        return Response('with logging')
+
+
+class MockSlowLoggingView(LoggingMixin, generics.GenericAPIView):
+    def get(self, request):
+        time.sleep(1)
         return Response('with logging')
 
 
@@ -62,13 +70,33 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.method, 'GET')
 
+    def test_log_time_fast(self):
+        MockLoggingView.as_view()(self.request).render()
+        log = APIRequestLog.objects.first()
+
+        # response time is very short
+        self.assertLessEqual(log.response_ms, 1)
+
+        # request_at is time of request, not response
+        self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 0.001)
+
+    def test_log_time_slow(self):
+        MockSlowLoggingView.as_view()(self.request).render()
+        log = APIRequestLog.objects.first()
+
+        # response time is longer than 1000 milliseconds
+        self.assertGreaterEqual(log.response_ms, 1000)
+
+        # request_at is time of request, not response
+        self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 1)
+
     def test_log_anon_user(self):
         MockLoggingView.as_view()(self.request).render()
         log = APIRequestLog.objects.first()
         self.assertEqual(log.user, None)
 
     def test_log_auth_user(self):
-        # set up request with token
+        # set up request with auth
         User.objects.create_user(username='myname', password='secret')
         user = User.objects.get(username='myname')
         request = APIRequestFactory().get('/test')
@@ -78,9 +106,26 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.user, user)
 
-    def test_params(self):
+    def test_log_params(self):
         request = APIRequestFactory().get('/test?p1=a&another=2')
 
         MockLoggingView.as_view()(request).render()
         log = APIRequestLog.objects.first()
         self.assertEqual(log.query_params, str({u'p1': u'a', u'another': u'2'}))
+
+    def test_log_data_empty(self):
+        """Default payload is string {}"""
+        request = APIRequestFactory().post('/test')
+
+        MockLoggingView.as_view()(request).render()
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.data, str({}))
+
+    def test_log_data_json(self):
+        payload = {'key': 1, 'key2': [{'a': 'b'}]}
+        request = APIRequestFactory().post('/test', payload, format='json')
+
+        MockLoggingView.as_view()(request).render()
+        log = APIRequestLog.objects.first()
+        expected_data = {u'key': 1, u'key2': [{u'a': u'b'}]}
+        self.assertEqual(log.data, str(expected_data))

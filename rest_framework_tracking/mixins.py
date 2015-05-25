@@ -26,6 +26,12 @@ class LoggingMixin(object):
         response_timedelta = now() - request.timestamp
         response_ms = int(response_timedelta.total_seconds() * 1000)
 
+        # get data dict
+        try:
+            data_dict = request.data.dict()
+        except AttributeError:  # if already a dict, can't dictify
+            data_dict = request.data
+
         # save to log
         APIRequestLog.objects.create(user=user,
                                      requested_at=request.timestamp,
@@ -35,7 +41,7 @@ class LoggingMixin(object):
                                      host=request.get_host(),
                                      method=request.method,
                                      query_params=request.query_params.dict(),
-                                     data=request.data)
+                                     data=data_dict)
 
         # return
         return super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
