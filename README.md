@@ -22,9 +22,29 @@ Install using `pip`...
 $ pip install drf-tracking
 ```
 
-## Example
+Register with your Django project by adding `rest_framework_tracking`
+to the `INSTALLED_APPS` list in your project's `settings.py` file.
+Then run the migrations for the `APIRequestLog` model:
 
-TODO: Write example.
+```bash
+$ python manage.py migrate
+```
+
+## Usage
+
+Add the `rest_framework_tracking.mixins.LoggingMixin` to any DRF view
+to create an instance of `APIRequestLog` every time the view is called.
+
+For instance:
+```python
+# views.py
+from rest_framework import generics
+from rest_framework_tracking.mixins import LoggingMixin
+
+class LoggingView(LoggingMixin, generics.GenericAPIView):
+    def get(self, request):
+        return Response('with logging')
+```
 
 ## Testing
 
