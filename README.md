@@ -11,7 +11,7 @@ Utils to log Django Rest Framework requests to the database
 ## Requirements
 
 * Python 2.7
-* Django (1.6, 1.7, 1.8)
+* Django (1.7, 1.8)
 * Django REST Framework (3.0, 3.1)
 
 ## Installation
