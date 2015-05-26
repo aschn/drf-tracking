@@ -32,6 +32,9 @@ class LoggingMixin(object):
         except AttributeError:  # if already a dict, can't dictify
             data_dict = request.data
 
+        # regular finalize response
+        response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+
         # save to log
         APIRequestLog.objects.create(user=user,
                                      requested_at=request.timestamp,
@@ -41,7 +44,8 @@ class LoggingMixin(object):
                                      host=request.get_host(),
                                      method=request.method,
                                      query_params=request.query_params.dict(),
-                                     data=data_dict)
+                                     data=data_dict,
+                                     response=response.rendered_content)
 
         # return
-        return super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+        return response

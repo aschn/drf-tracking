@@ -129,3 +129,8 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         expected_data = {u'key': 1, u'key2': [{u'a': u'b'}]}
         self.assertEqual(log.data, str(expected_data))
+
+    def test_log_response(self):
+        MockLoggingView.as_view()(self.request).render()
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.response, u'"with logging"')
