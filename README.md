@@ -6,7 +6,21 @@
 
 ## Overview
 
-Utils to log Django Rest Framework requests to the database
+drf-tracking provides a Django model and DRF view mixin that work together to log Django Rest Framework requests to the database. You'll get these attributes for every request/response cycle to a view that uses the mixin:
+
+ Model field name | Description | Model field type
+------------------|-------------|-----------------
+`user` | User if authenticated, None if not | Foreign Key
+`requested_at` | Date-time that the request was made | DateTimeField
+`response_ms` | Number of milliseconds spent in view code | PositiveIntegerField
+`path` | Target URI of the request, e.g., `"/api/"` | CharField
+`remote_addr` | IP address where the request originated, e.g., `"127.0.0.1"` | GenericIPAddressField
+`host` | Originating host of the request, e.g., `"example.com"` | URLField
+`method` | HTTP method, e.g., `"GET"` | CharField
+`query_params` | Dictionary of request query parameters, as text | TextField
+`data` | Dictionary of POST data (JSON or form), as text | TextField
+`response` | JSON response data | TextField
+
 
 ## Requirements
 
