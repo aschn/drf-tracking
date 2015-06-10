@@ -31,6 +31,7 @@ drf-tracking provides a Django model and DRF view mixin that work together to lo
 `query_params` | Dictionary of request query parameters, as text | TextField
 `data` | Dictionary of POST data (JSON or form), as text | TextField
 `response` | JSON response data | TextField
+`status_code` | HTTP status code, e.g., `200` or `404` | PositiveIntegerField
 
 ## Requirements
 

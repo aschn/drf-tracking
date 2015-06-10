@@ -62,3 +62,8 @@ class TestAPIRequestLog(TestCase):
         log = APIRequestLog.objects.create(remote_addr=self.ip, requested_at=now(),
                                            data='test POST')
         self.assertEqual(log.data, 'test POST')
+
+    def test_status_code(self):
+        log = APIRequestLog.objects.create(remote_addr=self.ip, requested_at=now(),
+                                           status_code=200)
+        self.assertEqual(log.status_code, 200)
