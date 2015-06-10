@@ -4,6 +4,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import serializers
 from rest_framework_tracking.models import APIRequestLog
 from rest_framework_tracking.mixins import LoggingMixin
 import pytest
@@ -44,6 +45,11 @@ class MockJSONLoggingView(LoggingMixin, APIView):
         return Response({'post': 'response'})
 
 
+class MockErrorLoggingView(LoggingMixin, APIView):
+    def get(self, request):
+        raise serializers.ValidationError('bad input')
+
+
 class TestLoggingMixin(APITestCase):
     def setUp(self):
         factory = APIRequestFactory()
@@ -78,6 +84,11 @@ class TestLoggingMixin(APITestCase):
         MockLoggingView.as_view()(self.request).render()
         log = APIRequestLog.objects.first()
         self.assertEqual(log.method, 'GET')
+
+    def test_log_status(self):
+        MockLoggingView.as_view()(self.request).render()
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 200)
 
     def test_log_time_fast(self):
         MockLoggingView.as_view()(self.request).render()
@@ -154,3 +165,9 @@ class TestLoggingMixin(APITestCase):
         MockJSONLoggingView.as_view()(request).render()
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response, u'{"post":"response"}')
+
+    def test_log_status_error(self):
+        MockErrorLoggingView.as_view()(self.request).render()
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 400)
+        self.assertEqual(log.response, u'["bad input"]')
