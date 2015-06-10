@@ -1,8 +1,9 @@
 from django.contrib.auth.models import User
 from django.utils.timezone import now
-from rest_framework import generics, authentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_tracking.models import APIRequestLog
 from rest_framework_tracking.mixins import LoggingMixin
 import pytest
@@ -12,27 +13,35 @@ import time
 pytestmark = pytest.mark.django_db
 
 
-class MockNoLoggingView(generics.GenericAPIView):
+class MockNoLoggingView(APIView):
     def get(self, request):
         return Response('no logging')
 
 
-class MockLoggingView(LoggingMixin, generics.GenericAPIView):
+class MockLoggingView(LoggingMixin, APIView):
     def get(self, request):
         return Response('with logging')
 
 
-class MockSlowLoggingView(LoggingMixin, generics.GenericAPIView):
+class MockSlowLoggingView(LoggingMixin, APIView):
     def get(self, request):
         time.sleep(1)
         return Response('with logging')
 
 
-class MockAuthLoggingView(LoggingMixin, generics.GenericAPIView):
-    authentication_classes = (authentication.SessionAuthentication,)
+class MockAuthLoggingView(LoggingMixin, APIView):
+    authentication_classes = (SessionAuthentication,)
 
     def get(self, request):
         return Response('with logging')
+
+
+class MockJSONLoggingView(LoggingMixin, APIView):
+    def get(self, request):
+        return Response({'get': 'response'})
+
+    def post(self, request):
+        return Response({'post': 'response'})
 
 
 class TestLoggingMixin(APITestCase):
@@ -130,7 +139,18 @@ class TestLoggingMixin(APITestCase):
         expected_data = {u'key': 1, u'key2': [{u'a': u'b'}]}
         self.assertEqual(log.data, str(expected_data))
 
-    def test_log_response(self):
+    def test_log_text_response(self):
         MockLoggingView.as_view()(self.request).render()
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response, u'"with logging"')
+
+    def test_log_json_get_response(self):
+        MockJSONLoggingView.as_view()(self.request).render()
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.response, u'{"get":"response"}')
+
+    def test_log_json_post_response(self):
+        request = APIRequestFactory().post('/test', {}, format='json')
+        MockJSONLoggingView.as_view()(request).render()
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.response, u'{"post":"response"}')
