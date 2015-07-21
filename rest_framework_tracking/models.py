@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from rest_framework_tracking.managers import PrefetchUserManager
 
 
 class APIRequestLog(models.Model):
@@ -36,3 +37,6 @@ class APIRequestLog(models.Model):
 
     # status code
     status_code = models.PositiveIntegerField(null=True, blank=True)
+
+    # custom manager
+    objects = PrefetchUserManager()
