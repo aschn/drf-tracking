@@ -9,22 +9,11 @@ class LoggingMixin(object):
         # regular intitialize
         request = super(LoggingMixin, self).initialize_request(request, *args, **kwargs)
 
-        # set time
-        request.timestamp = now()
-
-        # return
-        return request
-
-    def finalize_response(self, request, response, *args, **kwargs):
         # get user
         if request.user.is_authenticated():
             user = request.user
         else:  # AnonymousUser
             user = None
-
-        # compute response time
-        response_timedelta = now() - request.timestamp
-        response_ms = int(response_timedelta.total_seconds() * 1000)
 
         # get data dict
         try:
@@ -32,23 +21,34 @@ class LoggingMixin(object):
         except AttributeError:  # if already a dict, can't dictify
             data_dict = request.data
 
-        # regular finalize response
-        response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
-
         # save to log
-        APIRequestLog.objects.create(
+        request.log = APIRequestLog.objects.create(
             user=user,
-            requested_at=request.timestamp,
-            response_ms=response_ms,
+            requested_at=now(),
             path=request.path,
             remote_addr=request.META['REMOTE_ADDR'],
             host=request.get_host(),
             method=request.method,
             query_params=request.query_params.dict(),
             data=data_dict,
-            response=response.rendered_content,
-            status_code=response.status_code,
         )
+
+        # return
+        return request
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        # regular finalize response
+        response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+
+        # compute response time
+        response_timedelta = now() - request.log.requested_at
+        response_ms = int(response_timedelta.total_seconds() * 1000)
+
+        # save to log
+        request.log.response = response.rendered_content
+        request.log.status_code = response.status_code
+        request.log.response_ms = response_ms
+        request.log.save()
 
         # return
         return response

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+from django.shortcuts import get_list_or_404
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
 from rest_framework.response import Response
@@ -45,9 +46,15 @@ class MockJSONLoggingView(LoggingMixin, APIView):
         return Response({'post': 'response'})
 
 
-class MockErrorLoggingView(LoggingMixin, APIView):
+class MockValidationErrorLoggingView(LoggingMixin, APIView):
     def get(self, request):
         raise serializers.ValidationError('bad input')
+
+
+class Mock404ErrorLoggingView(LoggingMixin, APIView):
+    def get(self, request):
+        empty_qs = APIRequestLog.objects.none()
+        return get_list_or_404(empty_qs)
 
 
 class TestLoggingMixin(APITestCase):
@@ -95,10 +102,10 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
 
         # response time is very short
-        self.assertLessEqual(log.response_ms, 1)
+        self.assertLessEqual(log.response_ms, 7)
 
         # request_at is time of request, not response
-        self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 0.001)
+        self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 0.002)
 
     def test_log_time_slow(self):
         MockSlowLoggingView.as_view()(self.request).render()
@@ -166,8 +173,14 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response, u'{"post":"response"}')
 
-    def test_log_status_error(self):
-        MockErrorLoggingView.as_view()(self.request).render()
+    def test_log_status_validation_error(self):
+        MockValidationErrorLoggingView.as_view()(self.request).render()
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 400)
         self.assertEqual(log.response, u'["bad input"]')
+
+    def test_log_request_404_error(self):
+        Mock404ErrorLoggingView.as_view()(self.request).render()
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 404)
+        self.assertEqual(log.response, u'{"detail":"Not found."}')
