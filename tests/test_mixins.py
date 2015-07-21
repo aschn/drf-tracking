@@ -183,4 +183,4 @@ class TestLoggingMixin(APITestCase):
         Mock404ErrorLoggingView.as_view()(self.request).render()
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 404)
-        self.assertEqual(log.response, u'{"detail":"Not found."}')
+        self.assertIn('Not found', log.response)
