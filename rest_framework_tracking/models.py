@@ -3,7 +3,7 @@ from django.conf import settings
 from rest_framework_tracking.managers import PrefetchUserManager
 
 
-class APIRequestLog(models.Model):
+class BaseAPIRequestLog(models.Model):
     """Logs API requests by time, user, etc"""
     # user or None for anon
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
@@ -40,3 +40,10 @@ class APIRequestLog(models.Model):
 
     # custom manager
     objects = PrefetchUserManager()
+
+    class Meta:
+        abstract = True
+
+
+class APIRequestLog(BaseAPIRequestLog):
+    pass
