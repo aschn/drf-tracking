@@ -4,7 +4,7 @@ djangorestframework>=3.0
 
 # Test requirements
 pytest-django==2.8
-pytest==2.7.1
+pytest==2.7.2
 pytest-cov==1.8.1
 flake8==2.4.1
 
