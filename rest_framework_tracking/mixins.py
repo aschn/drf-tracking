@@ -1,6 +1,8 @@
 from .models import APIRequestLog
 from django.utils.timezone import now
 
+from rest_framework import exceptions
+
 
 class LoggingMixin(object):
     """Mixin to log requests"""
@@ -10,9 +12,14 @@ class LoggingMixin(object):
         request = super(LoggingMixin, self).initialize_request(request, *args, **kwargs)
 
         # get user
-        if request.user.is_authenticated():
-            user = request.user
-        else:  # AnonymousUser
+        try:    
+            if request.user.is_authenticated():
+                user = request.user
+            else:  # AnonymousUser
+                user = None
+        except exceptions.AuthenticationFailed:
+            # The AuthenticationFailed exception could be raised by any
+            # authentication backend based in tokens, when those expired.
             user = None
 
         # get data dict
