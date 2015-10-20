@@ -2,6 +2,7 @@ from .models import APIRequestLog
 from django.utils.timezone import now
 
 from rest_framework import exceptions
+from ipware.ip import get_real_ip
 
 
 class LoggingMixin(object):
@@ -33,7 +34,7 @@ class LoggingMixin(object):
             user=user,
             requested_at=now(),
             path=request.path,
-            remote_addr=request.META['REMOTE_ADDR'],
+            remote_addr=get_real_ip(request),
             host=request.get_host(),
             method=request.method,
             query_params=request.query_params.dict(),
