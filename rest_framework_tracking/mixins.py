@@ -34,7 +34,7 @@ class LoggingMixin(object):
             user=user,
             requested_at=now(),
             path=request.path,
-            remote_addr=get_real_ip(request),
+            remote_addr=get_real_ip(request) or request.META['REMOTE_ADDR'],
             host=request.get_host(),
             method=request.method,
             query_params=request.query_params.dict(),
