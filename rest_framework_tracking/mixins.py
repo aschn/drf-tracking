@@ -10,9 +10,12 @@ class LoggingMixin(object):
         request = super(LoggingMixin, self).initialize_request(request, *args, **kwargs)
 
         # get user
-        if request.user.is_authenticated():
-            user = request.user
-        else:  # AnonymousUser
+        try:
+            if request.user.is_authenticated():
+                user = request.user
+            else:  # AnonymousUser
+                user = None
+        except:
             user = None
 
         # get data dict
