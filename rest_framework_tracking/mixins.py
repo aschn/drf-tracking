@@ -1,6 +1,8 @@
 from .models import APIRequestLog
 from django.utils.timezone import now
 
+from rest_framework import exceptions
+
 
 class LoggingMixin(object):
     """Mixin to log requests"""
@@ -15,7 +17,8 @@ class LoggingMixin(object):
                 user = request.user
             else:  # AnonymousUser
                 user = None
-        except:
+        except exceptions.AuthenticationFailed:
+            # AuthenticationFailed exceptions are raised by django-rest-framework in case Token is invalid/expired
             user = None
 
         # get data dict
