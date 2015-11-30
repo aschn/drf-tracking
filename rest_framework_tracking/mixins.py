@@ -6,10 +6,10 @@ from rest_framework import exceptions
 
 class LoggingMixin(object):
     """Mixin to log requests"""
-    def initialize_request(self, request, *args, **kwargs):
+    def initial(self, request, *args, **kwargs):
         """Set current time on request"""
-        # regular intitialize
-        request = super(LoggingMixin, self).initialize_request(request, *args, **kwargs)
+        # regular initialize
+        super(LoggingMixin, self).initial(request, *args, **kwargs)
 
         # get user
         try:
@@ -39,22 +39,22 @@ class LoggingMixin(object):
             data=data_dict,
         )
 
-        # return
-        return request
-
     def finalize_response(self, request, response, *args, **kwargs):
         # regular finalize response
         response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
-        # compute response time
-        response_timedelta = now() - request.log.requested_at
-        response_ms = int(response_timedelta.total_seconds() * 1000)
+        try:
+            # compute response time
+            response_timedelta = now() - request.log.requested_at
+            response_ms = int(response_timedelta.total_seconds() * 1000)
 
-        # save to log
-        request.log.response = response.rendered_content
-        request.log.status_code = response.status_code
-        request.log.response_ms = response_ms
-        request.log.save()
+            # save to log
+            request.log.response = response.rendered_content
+            request.log.status_code = response.status_code
+            request.log.response_ms = response_ms
+            request.log.save()
+        except AttributeError:
+            pass
 
         # return
         return response
