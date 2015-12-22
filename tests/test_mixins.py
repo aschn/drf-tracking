@@ -1,104 +1,57 @@
 from django.contrib.auth.models import User
 from django.utils.timezone import now
-from django.shortcuts import get_list_or_404
-from rest_framework.authentication import SessionAuthentication
-from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import serializers
+from rest_framework.test import APITestCase, APIRequestFactory
 from rest_framework_tracking.models import APIRequestLog
-from rest_framework_tracking.mixins import LoggingMixin
+from rest_framework.authtoken.models import Token
+from views import MockLoggingView
 import pytest
-import time
 
 
 pytestmark = pytest.mark.django_db
 
 
-class MockNoLoggingView(APIView):
-    def get(self, request):
-        return Response('no logging')
-
-
-class MockLoggingView(LoggingMixin, APIView):
-    def get(self, request):
-        return Response('with logging')
-
-
-class MockSlowLoggingView(LoggingMixin, APIView):
-    def get(self, request):
-        time.sleep(1)
-        return Response('with logging')
-
-
-class MockAuthLoggingView(LoggingMixin, APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request):
-        return Response('with logging')
-
-
-class MockJSONLoggingView(LoggingMixin, APIView):
-    def get(self, request):
-        return Response({'get': 'response'})
-
-    def post(self, request):
-        return Response({'post': 'response'})
-
-
-class MockValidationErrorLoggingView(LoggingMixin, APIView):
-    def get(self, request):
-        raise serializers.ValidationError('bad input')
-
-
-class Mock404ErrorLoggingView(LoggingMixin, APIView):
-    def get(self, request):
-        empty_qs = APIRequestLog.objects.none()
-        return get_list_or_404(empty_qs)
-
-
 class TestLoggingMixin(APITestCase):
-    def setUp(self):
-        factory = APIRequestFactory()
-        self.path = '/test/'
-        self.request = factory.get(self.path)
+
+    urls = 'tests.urls'
 
     def test_nologging_no_log_created(self):
-        MockNoLoggingView.as_view()(self.request).render()
+        self.client.get('/no-logging')
         self.assertEqual(APIRequestLog.objects.all().count(), 0)
 
     def test_logging_creates_log(self):
-        MockLoggingView.as_view()(self.request).render()
+        self.client.get('/logging')
         self.assertEqual(APIRequestLog.objects.all().count(), 1)
 
     def test_log_path(self):
-        MockLoggingView.as_view()(self.request).render()
+        self.client.get('/logging')
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.path, self.path)
+        self.assertEqual(log.path, '/logging')
 
     def test_log_ip(self):
-        self.request.META['REMOTE_ADDR'] = '127.0.0.9'
-        MockLoggingView.as_view()(self.request).render()
+        request = APIRequestFactory().get('/logging')
+        request.META['REMOTE_ADDR'] = '127.0.0.9'
+
+        MockLoggingView.as_view()(request).render()
         log = APIRequestLog.objects.first()
         self.assertEqual(log.remote_addr, '127.0.0.9')
 
     def test_log_host(self):
-        MockLoggingView.as_view()(self.request).render()
+        self.client.get('/logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.host, 'testserver')
 
     def test_log_method(self):
-        MockLoggingView.as_view()(self.request).render()
+        self.client.get('/logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.method, 'GET')
 
     def test_log_status(self):
-        MockLoggingView.as_view()(self.request).render()
+        self.client.get('/logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 200)
 
     def test_log_time_fast(self):
-        MockLoggingView.as_view()(self.request).render()
+        self.client.get('/logging')
         log = APIRequestLog.objects.first()
 
         # response time is very short
@@ -108,7 +61,7 @@ class TestLoggingMixin(APITestCase):
         self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 0.002)
 
     def test_log_time_slow(self):
-        MockSlowLoggingView.as_view()(self.request).render()
+        self.client.get('/slow-logging')
         log = APIRequestLog.objects.first()
 
         # response time is longer than 1000 milliseconds
@@ -118,69 +71,89 @@ class TestLoggingMixin(APITestCase):
         self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 1)
 
     def test_log_anon_user(self):
-        MockLoggingView.as_view()(self.request).render()
+        self.client.get('/logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.user, None)
 
     def test_log_auth_user(self):
-        # set up request with auth
+        # set up active user
         User.objects.create_user(username='myname', password='secret')
         user = User.objects.get(username='myname')
-        request = APIRequestFactory().get('/test')
-        force_authenticate(request, user=user)
 
-        MockLoggingView.as_view()(request).render()
+        # set up request with auth
+        self.client.login(username='myname', password='secret')
+        self.client.get('/session-auth-logging')
+
+        # test
         log = APIRequestLog.objects.first()
         self.assertEqual(log.user, user)
 
-    def test_log_params(self):
-        request = APIRequestFactory().get('/test?p1=a&another=2')
+    def test_log_auth_inactive_user(self):
+        # set up inactive user with token
+        user = User.objects.create_user(username='myname', password='secret')
+        token = Token.objects.create(user=user)
+        token_header = 'Token %s' % token.key
+        user.is_active = False
+        user.save()
 
-        MockLoggingView.as_view()(request).render()
+        # force login because regular client.login doesn't work for inactive users
+        self.client.get('/token-auth-logging',
+                        HTTP_AUTHORIZATION=token_header)
+
+        # test
+        log = APIRequestLog.objects.first()
+        self.assertIsNone(log.user)
+        self.assertEqual(log.response, '{"detail":"User inactive or deleted."}')
+
+    def test_log_unauth_fails(self):
+        # set up request without auth
+        self.client.logout()
+        self.client.get('/session-auth-logging')
+
+        # test
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.response, '{"detail":"Authentication credentials were not provided."}')
+
+    def test_log_params(self):
+        self.client.get('/logging', {'p1': 'a', 'another': '2'})
         log = APIRequestLog.objects.first()
         self.assertEqual(log.query_params, str({u'p1': u'a', u'another': u'2'}))
 
     def test_log_data_empty(self):
         """Default payload is string {}"""
-        request = APIRequestFactory().post('/test')
-
-        MockLoggingView.as_view()(request).render()
+        self.client.post('/logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.data, str({}))
 
     def test_log_data_json(self):
-        payload = {'key': 1, 'key2': [{'a': 'b'}]}
-        request = APIRequestFactory().post('/test', payload, format='json')
-
-        MockLoggingView.as_view()(request).render()
+        self.client.post('/logging', {'key': 1, 'key2': [{'a': 'b'}]}, format='json')
         log = APIRequestLog.objects.first()
         expected_data = {u'key': 1, u'key2': [{u'a': u'b'}]}
         self.assertEqual(log.data, str(expected_data))
 
     def test_log_text_response(self):
-        MockLoggingView.as_view()(self.request).render()
+        self.client.get('/logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response, u'"with logging"')
 
     def test_log_json_get_response(self):
-        MockJSONLoggingView.as_view()(self.request).render()
+        self.client.get('/json-logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response, u'{"get":"response"}')
 
     def test_log_json_post_response(self):
-        request = APIRequestFactory().post('/test', {}, format='json')
-        MockJSONLoggingView.as_view()(request).render()
+        self.client.post('/json-logging', {}, format='json')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response, u'{"post":"response"}')
 
     def test_log_status_validation_error(self):
-        MockValidationErrorLoggingView.as_view()(self.request).render()
+        self.client.get('/validation-error-logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 400)
         self.assertEqual(log.response, u'["bad input"]')
 
     def test_log_request_404_error(self):
-        Mock404ErrorLoggingView.as_view()(self.request).render()
+        self.client.get('/404-error-logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 404)
         self.assertIn('Not found', log.response)

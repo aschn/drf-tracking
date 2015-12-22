@@ -1,26 +1,11 @@
 from .models import APIRequestLog
 from django.utils.timezone import now
 
-from rest_framework import exceptions
-
 
 class LoggingMixin(object):
     """Mixin to log requests"""
-    def initialize_request(self, request, *args, **kwargs):
+    def initial(self, request, *args, **kwargs):
         """Set current time on request"""
-        # regular intitialize
-        request = super(LoggingMixin, self).initialize_request(request, *args, **kwargs)
-
-        # get user
-        try:
-            if request.user.is_authenticated():
-                user = request.user
-            else:  # AnonymousUser
-                user = None
-        except exceptions.AuthenticationFailed:
-            # AuthenticationFailed exceptions are raised by django-rest-framework in case Token is invalid/expired
-            user = None
-
         # get data dict
         try:
             data_dict = request.data.dict()
@@ -35,9 +20,9 @@ class LoggingMixin(object):
         else:
             ip = request.META.get("REMOTE_ADDR", "")
 
-        # save to log
-        request.log = APIRequestLog.objects.create(
-            user=user,
+        # save to log without user
+        # self.request is already present
+        self.request.log = APIRequestLog.objects.create(
             requested_at=now(),
             path=request.path,
             remote_addr=ip,
@@ -47,22 +32,29 @@ class LoggingMixin(object):
             data=data_dict,
         )
 
-        # return
-        return request
+        # regular intitial, including auth check
+        super(LoggingMixin, self).initial(request, *args, **kwargs)
+
+        # add user to log after auth
+        user = request.user
+        if user.is_anonymous():
+            user = None
+        self.request.log.user = user
+        self.request.log.save()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # regular finalize response
         response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
         # compute response time
-        response_timedelta = now() - request.log.requested_at
+        response_timedelta = now() - self.request.log.requested_at
         response_ms = int(response_timedelta.total_seconds() * 1000)
 
         # save to log
-        request.log.response = response.rendered_content
-        request.log.status_code = response.status_code
-        request.log.response_ms = response_ms
-        request.log.save()
+        self.request.log.response = response.rendered_content
+        self.request.log.status_code = response.status_code
+        self.request.log.response_ms = response_ms
+        self.request.log.save()
 
         # return
         return response
