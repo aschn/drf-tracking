@@ -103,7 +103,7 @@ class TestLoggingMixin(APITestCase):
         # test
         log = APIRequestLog.objects.first()
         self.assertIsNone(log.user)
-        self.assertEqual(log.response, '{"detail":"User inactive or deleted."}')
+        self.assertIn("User inactive or deleted", log.response)
 
     def test_log_unauth_fails(self):
         # set up request without auth
