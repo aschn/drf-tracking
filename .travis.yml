@@ -19,7 +19,13 @@ matrix:
   fast_finish: true
 
 install:
+  - pip install -r requirements.txt
   - pip install tox python-coveralls
 
 script:
     - tox -e $TOX_ENV
+    - coverage run runtests.py
+
+after_success:
+  coveralls
+
