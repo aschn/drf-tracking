@@ -27,7 +27,7 @@ class BaseAPIRequestLog(models.Model):
     method = models.CharField(max_length=10)
 
     # query params
-    query_params = models.TextField(db_index=True)
+    query_params = models.TextField(null=True, blank=True)
 
     # POST body data
     data = models.TextField(null=True, blank=True)
