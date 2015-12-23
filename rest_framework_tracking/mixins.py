@@ -21,8 +21,8 @@ class LoggingMixin(object):
         except AttributeError:  # if already a dict, can't dictify
             data_dict = request.data
 
-	# get IP
-	ip = request.META.get("HTTP_X_FORWARDED_FOR", None)
+        # get IP
+        ip = request.META.get("HTTP_X_FORWARDED_FOR", None)
         if ip:
             # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
             ip = ip.split(", ")[0]
