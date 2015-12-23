@@ -21,12 +21,20 @@ class LoggingMixin(object):
         except AttributeError:  # if already a dict, can't dictify
             data_dict = request.data
 
+        # get IP
+        ip = request.META.get("HTTP_X_FORWARDED_FOR", None)
+        if ip:
+            # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
+            ip = ip.split(", ")[0]
+        else:
+            ip = request.META.get("REMOTE_ADDR", "")
+
         # save to log
         request.log = APIRequestLog.objects.create(
             user=user,
             requested_at=now(),
             path=request.path,
-            remote_addr=request.META['REMOTE_ADDR'],
+            remote_addr=ip,
             host=request.get_host(),
             method=request.method,
             query_params=request.query_params.dict(),
