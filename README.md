@@ -14,7 +14,7 @@ drf-tracking provides a Django model and DRF view mixin that work together to lo
 `requested_at` | Date-time that the request was made | DateTimeField
 `response_ms` | Number of milliseconds spent in view code | PositiveIntegerField
 `path` | Target URI of the request, e.g., `"/api/"` | CharField
-`remote_addr` | IP address where the request originated, e.g., `"127.0.0.1"` | GenericIPAddressField
+`remote_addr` | IP address where the request originated (X_FORWARDED_FOR if available, REMOTE_ADDR if not), e.g., `"127.0.0.1"` | GenericIPAddressField
 `host` | Originating host of the request, e.g., `"example.com"` | URLField
 `method` | HTTP method, e.g., `"GET"` | CharField
 `query_params` | Dictionary of request query parameters, as text | TextField
