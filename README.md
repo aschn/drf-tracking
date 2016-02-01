@@ -61,6 +61,13 @@ class LoggingView(LoggingMixin, generics.GenericAPIView):
         return Response('with logging')
 ```
 
+For performance enhancement, explicitly choose methods to be logged using `logging_methods` attribute:
+```python
+class LoggingView(LoggingMixin, generics.CreateModelMixin, generics.GenericAPIView):
+    logging_methods = ['POST', 'PUT']
+    model = ...
+``` 
+
 ## Testing
 
 Install testing requirements.

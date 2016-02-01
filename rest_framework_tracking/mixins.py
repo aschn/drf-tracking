@@ -3,9 +3,17 @@ from django.utils.timezone import now
 
 
 class LoggingMixin(object):
+    logging_methods = '__all__'
+
     """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
         """Set current time on request"""
+
+        # check if request method is being logged
+        if self.logging_methods != '__all__' and request.method not in self.logging_methods:
+            super(LoggingMixin, self).initial(request, *args, **kwargs)
+            return
+
         # get data dict
         try:
             data_dict = request.data.dict()
@@ -42,6 +50,11 @@ class LoggingMixin(object):
         self.request.log.save()
 
     def finalize_response(self, request, response, *args, **kwargs):
+        # check if request method is being logged
+        if self.logging_methods != '__all__' and request.method not in self.logging_methods:
+            response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+            return response
+
         # regular finalize response
         response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
