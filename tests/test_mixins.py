@@ -165,3 +165,11 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 404)
         self.assertIn('Not found', log.response)
+        self.assertIn('Traceback', log.errors)
+
+    def test_log_request_500_error(self):
+        self.client.get('/500-error-logging')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 500)
+        self.assertIn('response', log.response)
+        self.assertIn('Traceback', log.errors)
