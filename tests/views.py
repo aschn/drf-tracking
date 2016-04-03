@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import serializers, viewsets, mixins
+from rest_framework.exceptions import APIException
 from rest_framework_tracking.mixins import LoggingMixin
 from rest_framework_tracking.models import APIRequestLog
 from tests.test_serializers import ApiRequestLogSerializer
@@ -95,3 +96,8 @@ class Mock400BodyParseErrorLoggingView(LoggingMixin, APIView):
         # (though only if it's the first access to request.data)
         request.data
         return Response('Data processed')
+
+
+class Mock500ErrorLoggingView(LoggingMixin, APIView):
+    def get(self, request):
+        raise APIException('response')

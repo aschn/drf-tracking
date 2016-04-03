@@ -19,4 +19,4 @@ urlpatterns = [
     url(r'^no-view-log$', test_views.MockNameAPIView.as_view()),
     url(r'^view-log$', test_views.MockNameViewSet.as_view({'get': 'list'})),
     url(r'^400-body-parse-error-logging$', test_views.Mock400BodyParseErrorLoggingView.as_view()),
-]
+    url(r'^500-error-logging$', test_views.Mock500ErrorLoggingView.as_view()), ]
