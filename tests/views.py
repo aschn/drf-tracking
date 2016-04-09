@@ -25,6 +25,16 @@ class MockSlowLoggingView(LoggingMixin, APIView):
         return Response('with logging')
 
 
+class MockExplicitLoggingView(LoggingMixin, APIView):
+    logging_methods = ['POST']
+
+    def get(self, request):
+        return Response('no logging')
+
+    def post(self, request):
+        return Response('with logging')
+
+
 class MockSessionAuthLoggingView(LoggingMixin, APIView):
     authentication_classes = (SessionAuthentication,)
     permission_classes = (IsAuthenticated,)
