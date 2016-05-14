@@ -1,4 +1,5 @@
 from .models import APIRequestLog
+from rest_framework.exceptions import UnsupportedMediaType
 from django.utils.timezone import now
 
 
@@ -11,6 +12,8 @@ class LoggingMixin(object):
             data_dict = request.data.dict()
         except AttributeError:  # if already a dict, can't dictify
             data_dict = request.data
+        except UnsupportedMediaType:
+            data_dict = None
 
         # get IP
         ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)

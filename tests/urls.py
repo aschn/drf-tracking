@@ -10,4 +10,5 @@ urlpatterns = [
     url(r'^json-logging$', test_views.MockJSONLoggingView.as_view()),
     url(r'^validation-error-logging$', test_views.MockValidationErrorLoggingView.as_view()),
     url(r'^404-error-logging$', test_views.Mock404ErrorLoggingView.as_view()),
+    url(r'^415-error-logging$', test_views.Mock415ErrorLoggingView.as_view()),
 ]
