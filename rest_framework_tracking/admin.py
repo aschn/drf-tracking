@@ -8,6 +8,6 @@ class APIRequestLogAdmin(admin.ModelAdmin):
                     'user', 'method',
                     'path', 'remote_addr', 'host',
                     'query_params')
-    list_filter = ('user', 'path', 'method', 'status_code')
+    list_filter = ('method', 'status_code')
 
 admin.site.register(APIRequestLog, APIRequestLogAdmin)
