@@ -25,9 +25,8 @@ drf-tracking provides a Django model and DRF view mixin that work together to lo
 
 ## Requirements
 
-* Python 2.7
-* Django (1.7, 1.8. 1.9)
-* Django REST Framework (3.0, 3.1, 3.2, 3.3)
+* Django 1.7, 1.8, 1.9, 1.10
+* Django REST Framework and Python release supporting the version of Django you are using
 
 ## Installation
 
@@ -54,6 +53,7 @@ For instance:
 ```python
 # views.py
 from rest_framework import generics
+from rest_framework.response import Response
 from rest_framework_tracking.mixins import LoggingMixin
 
 class LoggingView(LoggingMixin, generics.GenericAPIView):
