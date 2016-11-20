@@ -31,7 +31,7 @@ class LoggingMixin(object):
             data=data_dict,
         )
 
-        # regular intitial, including auth check
+        # regular initial, including auth check
         super(LoggingMixin, self).initial(request, *args, **kwargs)
 
         # add user to log after auth
