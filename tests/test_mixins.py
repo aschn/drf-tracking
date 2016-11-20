@@ -1,11 +1,14 @@
+# coding=utf-8
+from __future__ import absolute_import
+
+import pytest
 from django.contrib.auth.models import User
 from django.utils.timezone import now
-from rest_framework.test import APITestCase, APIRequestFactory
-from rest_framework_tracking.models import APIRequestLog
 from rest_framework.authtoken.models import Token
-from views import MockLoggingView
-import pytest
+from rest_framework.test import APIRequestFactory, APITestCase
+from rest_framework_tracking.models import APIRequestLog
 
+from .views import MockLoggingView
 
 pytestmark = pytest.mark.django_db
 
@@ -136,8 +139,11 @@ class TestLoggingMixin(APITestCase):
     def test_log_data_json(self):
         self.client.post('/logging', {'key': 1, 'key2': [{'a': 'b'}]}, format='json')
         log = APIRequestLog.objects.first()
-        expected_data = {u'key': 1, u'key2': [{u'a': u'b'}]}
-        self.assertEqual(log.data, str(expected_data))
+        expected_data = frozenset({  # keys could be either way round
+            str({u'key': 1, u'key2': [{u'a': u'b'}]}),
+            str({u'key2': [{u'a': u'b'}], u'key': 1}),
+        })
+        self.assertIn(log.data, expected_data)
 
     def test_log_text_response(self):
         self.client.get('/logging')

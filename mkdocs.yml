@@ -2,3 +2,5 @@ site_name: drf-tracking
 site_description: Utils to log Django Rest Framework requests to the database
 repo_url: https://github.com/aschn/drf-tracking
 site_dir: html
+extra_css:
+  - css/extra.css

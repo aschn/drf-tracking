@@ -3,7 +3,7 @@
         <img src="https://travis-ci.org/aschn/drf-tracking.svg?branch=master">
     </a>
     <a href="https://pypi.python.org/pypi/drf-tracking">
-        <img src="https://pypip.in/version/drf-tracking/badge.svg">
+        <img src="https://badge.fury.io/py/drf-tracking.svg">
     </a>
 </div>
 
@@ -25,7 +25,7 @@ drf-tracking provides a Django model and DRF view mixin that work together to lo
 `requested_at` | Date-time that the request was made | DateTimeField
 `response_ms` | Number of milliseconds spent in view code | PositiveIntegerField
 `path` | Target URI of the request, e.g., `"/api/"` | CharField
-`remote_addr` | IP address where the request originated, e.g., `"127.0.0.1"` | GenericIPAddressField
+`remote_addr` | IP address where the request originated (X_FORWARDED_FOR if available, REMOTE_ADDR if not), e.g., `"127.0.0.1"` | GenericIPAddressField
 `host` | Originating host of the request, e.g., `"example.com"` | URLField
 `method` | HTTP method, e.g., `"GET"` | CharField
 `query_params` | Dictionary of request query parameters, as text | TextField
@@ -35,8 +35,8 @@ drf-tracking provides a Django model and DRF view mixin that work together to lo
 
 ## Requirements
 
-* Python (2.7, 3.3, 3.4)
-* Django (1.6, 1.7)
+* Django 1.7, 1.8, 1.9, 1.10
+* Django REST Framework and Python release supporting the version of Django you are using
 
 ## Installation
 
@@ -63,6 +63,7 @@ For instance:
 ```python
 # views.py
 from rest_framework import generics
+from rest_framework.response import Response
 from rest_framework_tracking.mixins import LoggingMixin
 
 class LoggingView(LoggingMixin, generics.GenericAPIView):
