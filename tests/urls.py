@@ -1,5 +1,9 @@
+# coding=utf-8
+from __future__ import absolute_import
+
 from django.conf.urls import url
-import views as test_views
+
+from . import views as test_views
 
 urlpatterns = [
     url(r'^no-logging$', test_views.MockNoLoggingView.as_view()),
