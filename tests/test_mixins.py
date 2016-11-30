@@ -66,7 +66,7 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
 
         # response time is very short
-        self.assertLessEqual(log.response_ms, 7)
+        self.assertLessEqual(log.response_ms, 20)
 
         # request_at is time of request, not response
         self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 0.002)

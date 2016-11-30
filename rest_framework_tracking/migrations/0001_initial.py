@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('remote_addr', models.GenericIPAddressField()),
                 ('host', models.URLField()),
                 ('method', models.CharField(max_length=10)),
-                ('query_params', models.TextField(blank=True, db_index=True, null=True)),
+                ('query_params', models.TextField(blank=True, null=True)),
                 ('data', models.TextField(blank=True, null=True)),
                 ('response', models.TextField(blank=True, null=True)),
                 ('status_code', models.PositiveIntegerField(blank=True, null=True)),
