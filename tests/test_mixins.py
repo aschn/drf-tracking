@@ -176,3 +176,10 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 404)
         self.assertIn('Not found', log.response)
+
+    def test_log_request_415_error(self):
+        content_type = 'text/plain'
+        self.client.post('/415-error-logging', {}, content_type=content_type)
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 415)
+        self.assertIn('Unsupported media type', log.response)

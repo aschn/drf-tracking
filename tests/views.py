@@ -68,3 +68,8 @@ class Mock404ErrorLoggingView(LoggingMixin, APIView):
     def get(self, request):
         empty_qs = APIRequestLog.objects.none()
         return get_list_or_404(empty_qs)
+
+
+class Mock415ErrorLoggingView(LoggingMixin, APIView):
+    def post(self, request):
+        return request.data
