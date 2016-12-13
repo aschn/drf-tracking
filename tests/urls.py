@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^no-logging$', test_views.MockNoLoggingView.as_view()),
     url(r'^logging$', test_views.MockLoggingView.as_view()),
     url(r'^slow-logging$', test_views.MockSlowLoggingView.as_view()),
+    url(r'^explicit-logging$', test_views.MockExplicitLoggingView.as_view()),
     url(r'^session-auth-logging$', test_views.MockSessionAuthLoggingView.as_view()),
     url(r'^token-auth-logging$', test_views.MockTokenAuthLoggingView.as_view()),
     url(r'^json-logging$', test_views.MockJSONLoggingView.as_view()),

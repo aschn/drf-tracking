@@ -81,6 +81,11 @@ class TestLoggingMixin(APITestCase):
         # request_at is time of request, not response
         self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 1)
 
+    def test_logging_explicit(self):
+        self.client.get('/explicit-logging')
+        self.client.post('/explicit-logging')
+        self.assertEqual(APIRequestLog.objects.all().count(), 1)
+
     def test_log_anon_user(self):
         self.client.get('/logging')
         log = APIRequestLog.objects.first()
