@@ -8,6 +8,9 @@ class APIRequestLogAdmin(admin.ModelAdmin):
                     'user', 'method',
                     'path', 'remote_addr', 'host',
                     'query_params')
-    list_filter = ('user', 'path', 'method', 'status_code')
+    list_filter = ('method', 'status_code')
+    search_fields = ('path', 'user__email',)
+    raw_id_fields = ('user', )
+
 
 admin.site.register(APIRequestLog, APIRequestLogAdmin)

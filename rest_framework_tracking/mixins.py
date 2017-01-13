@@ -1,23 +1,34 @@
 from .models import APIRequestLog
+from rest_framework.exceptions import UnsupportedMediaType
 from django.utils.timezone import now
 import traceback
 
 
 class LoggingMixin(object):
+    logging_methods = '__all__'
+
     """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
         """Set current time on request"""
+
+        # check if request method is being logged
+        if self.logging_methods != '__all__' and request.method not in self.logging_methods:
+            super(LoggingMixin, self).initial(request, *args, **kwargs)
+            return None
+
         # get data dict
         try:
             data_dict = request.data.dict()
         except AttributeError:  # if already a dict, can't dictify
             data_dict = request.data
+        except UnsupportedMediaType:
+            data_dict = None
 
         # get IP
         ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
         if ipaddr:
             # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
-            ipaddr = ipaddr.split(", ")[0]
+            ipaddr = [x.strip() for x in ipaddr.split(",")][0]
         else:
             ipaddr = request.META.get("REMOTE_ADDR", "")
 
@@ -32,7 +43,7 @@ class LoggingMixin(object):
             data=data_dict,
         )
 
-        # regular intitial, including auth check
+        # regular initial, including auth check
         super(LoggingMixin, self).initial(request, *args, **kwargs)
 
         # add user to log after auth
@@ -57,6 +68,10 @@ class LoggingMixin(object):
     def finalize_response(self, request, response, *args, **kwargs):
         # regular finalize response
         response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+
+        # check if request method is being logged
+        if self.logging_methods != '__all__' and request.method not in self.logging_methods:
+            return response
 
         # compute response time
         response_timedelta = now() - self.request.log.requested_at

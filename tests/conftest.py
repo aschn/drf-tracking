@@ -1,10 +1,14 @@
+# coding=utf-8
+
+
 def pytest_configure():
     from django.conf import settings
-
+    import environ
     settings.configure(
         DEBUG_PROPAGATE_EXCEPTIONS=True,
-        DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3',
-                               'NAME': ':memory:'}},
+        DATABASES={
+            'default': environ.Env().db(default="sqlite://")  # DATABASE_URL should be specified in the environment
+        },
         SITE_ID=1,
         SECRET_KEY='not very secret in tests',
         USE_I18N=True,

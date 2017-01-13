@@ -1,11 +1,14 @@
+# coding=utf-8
+from __future__ import absolute_import
+
+import pytest
 from django.contrib.auth.models import User
 from django.utils.timezone import now
-from rest_framework.test import APITestCase, APIRequestFactory
-from rest_framework_tracking.models import APIRequestLog
 from rest_framework.authtoken.models import Token
-from views import MockLoggingView
-import pytest
+from rest_framework.test import APIRequestFactory, APITestCase
+from rest_framework_tracking.models import APIRequestLog
 
+from .views import MockLoggingView
 
 pytestmark = pytest.mark.django_db
 
@@ -63,7 +66,7 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
 
         # response time is very short
-        self.assertLessEqual(log.response_ms, 7)
+        self.assertLessEqual(log.response_ms, 20)
 
         # request_at is time of request, not response
         self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 0.002)
@@ -77,6 +80,11 @@ class TestLoggingMixin(APITestCase):
 
         # request_at is time of request, not response
         self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 1)
+
+    def test_logging_explicit(self):
+        self.client.get('/explicit-logging')
+        self.client.post('/explicit-logging')
+        self.assertEqual(APIRequestLog.objects.all().count(), 1)
 
     def test_log_anon_user(self):
         self.client.get('/logging')
@@ -136,8 +144,11 @@ class TestLoggingMixin(APITestCase):
     def test_log_data_json(self):
         self.client.post('/logging', {'key': 1, 'key2': [{'a': 'b'}]}, format='json')
         log = APIRequestLog.objects.first()
-        expected_data = {u'key': 1, u'key2': [{u'a': u'b'}]}
-        self.assertEqual(log.data, str(expected_data))
+        expected_data = frozenset({  # keys could be either way round
+            str({u'key': 1, u'key2': [{u'a': u'b'}]}),
+            str({u'key2': [{u'a': u'b'}], u'key': 1}),
+        })
+        self.assertIn(log.data, expected_data)
 
     def test_log_text_response(self):
         self.client.get('/logging')
@@ -173,3 +184,10 @@ class TestLoggingMixin(APITestCase):
         self.assertEqual(log.status_code, 500)
         self.assertIn('response', log.response)
         self.assertIn('Traceback', log.errors)
+
+        def test_log_request_415_error(self):
+        content_type = 'text/plain'
+        self.client.post('/415-error-logging', {}, content_type=content_type)
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 415)
+        self.assertIn('Unsupported media type', log.response)

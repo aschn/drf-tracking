@@ -26,6 +26,16 @@ class MockSlowLoggingView(LoggingMixin, APIView):
         return Response('with logging')
 
 
+class MockExplicitLoggingView(LoggingMixin, APIView):
+    logging_methods = ['POST']
+
+    def get(self, request):
+        return Response('no logging')
+
+    def post(self, request):
+        return Response('with logging')
+
+
 class MockSessionAuthLoggingView(LoggingMixin, APIView):
     authentication_classes = (SessionAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -64,3 +74,8 @@ class Mock404ErrorLoggingView(LoggingMixin, APIView):
 class Mock500ErrorLoggingView(LoggingMixin, APIView):
     def get(self, request):
         raise APIException('response')
+
+
+class Mock415ErrorLoggingView(LoggingMixin, APIView):
+    def post(self, request):
+        return request.data
