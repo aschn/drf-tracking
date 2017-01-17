@@ -185,7 +185,7 @@ class TestLoggingMixin(APITestCase):
         self.assertIn('response', log.response)
         self.assertIn('Traceback', log.errors)
 
-        def test_log_request_415_error(self):
+    def test_log_request_415_error(self):
         content_type = 'text/plain'
         self.client.post('/415-error-logging', {}, content_type=content_type)
         log = APIRequestLog.objects.first()
