@@ -31,10 +31,21 @@ class LoggingMixin(object):
         else:
             ipaddr = request.META.get("REMOTE_ADDR", "")
 
+        # get view
+        view_name = ''
+        try:
+            method = request.method.lower()
+            attributes = getattr(self, method)
+            view_name = (type(attributes.__self__).__module__ + '.' +
+                         type(attributes.__self__).__name__)
+        except Exception:
+            pass
+
         # save to log
         self.request.log = APIRequestLog.objects.create(
             requested_at=now(),
             path=request.path,
+            view=view_name,
             remote_addr=ipaddr,
             host=request.get_host(),
             method=request.method,

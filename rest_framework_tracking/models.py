@@ -17,6 +17,9 @@ class BaseAPIRequestLog(models.Model):
     # request path
     path = models.CharField(max_length=200, db_index=True)
 
+    # view called by the path
+    view = models.CharField(max_length=200, db_index=True)
+
     # remote IP address of request
     remote_addr = models.GenericIPAddressField()
 
