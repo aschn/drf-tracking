@@ -183,3 +183,10 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 415)
         self.assertIn('Unsupported media type', log.response)
+
+    def test_log_request_body_parse_error(self):
+        content_type = 'application/json'
+        self.client.post('/400-body-parse-error-logging', 'INVALID JSON', content_type=content_type)
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 400)
+        self.assertIn('parse error', log.response)
