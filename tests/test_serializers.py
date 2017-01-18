@@ -6,4 +6,4 @@ class ApiRequestLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = APIRequestLog
-        fields = '__all__'
+        fields = ('view',)
