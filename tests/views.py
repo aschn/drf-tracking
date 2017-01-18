@@ -73,3 +73,11 @@ class Mock404ErrorLoggingView(LoggingMixin, APIView):
 class Mock415ErrorLoggingView(LoggingMixin, APIView):
     def post(self, request):
         return request.data
+
+
+class Mock400BodyParseErrorLoggingView(LoggingMixin, APIView):
+    def post(self, request):
+        # raise ParseError for request with mismatched Content-Type and body:
+        # (though only if it's the first access to request.data)
+        request.data
+        return Response('Data processed')
