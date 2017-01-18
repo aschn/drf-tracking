@@ -20,6 +20,9 @@ class BaseAPIRequestLog(models.Model):
     # view called by the path
     view = models.CharField(max_length=200, db_index=True)
 
+    # method of the view
+    view_method = models.CharField(max_length=200, db_index=True)
+
     # remote IP address of request
     remote_addr = models.GenericIPAddressField()
 
