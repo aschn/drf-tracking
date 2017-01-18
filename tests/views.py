@@ -87,3 +87,11 @@ class MockNameViewSet(LoggingMixin, viewsets.GenericViewSet, mixins.ListModelMix
 
     queryset = APIRequestLog.objects.all()
     serializer_class = ApiRequestLogSerializer
+
+
+class Mock400BodyParseErrorLoggingView(LoggingMixin, APIView):
+    def post(self, request):
+        # raise ParseError for request with mismatched Content-Type and body:
+        # (though only if it's the first access to request.data)
+        request.data
+        return Response('Data processed')
