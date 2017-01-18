@@ -198,3 +198,18 @@ class TestLoggingMixin(APITestCase):
         self.client.get('/view-log')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.view, 'tests.views.MockNameViewSet')
+
+    def test_log_view_method_name_api_view(self):
+        self.client.get('/no-view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view_method, 'get')
+
+    def test_no_log_view_method_name(self):
+        self.client.post('/view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view_method, '')
+
+    def test_log_view_method_name_generic_viewset(self):
+        self.client.get('/view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view_method, 'list')
