@@ -36,6 +36,10 @@ class TestAPIRequestLog(TestCase):
         log = APIRequestLog.objects.create(path='/test', remote_addr=self.ip, requested_at=now())
         self.assertEqual(log.path, '/test')
 
+    def test_view(self):
+        log = APIRequestLog.objects.create(view='views.api.ApiView', remote_addr=self.ip, requested_at=now())
+        self.assertEqual(log.view, 'views.api.ApiView')
+
     def test_remote_addr(self):
         log = APIRequestLog.objects.create(remote_addr='127.0.0.9', requested_at=now())
         self.assertEqual(log.remote_addr, '127.0.0.9')
