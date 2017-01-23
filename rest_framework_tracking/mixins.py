@@ -22,10 +22,28 @@ class LoggingMixin(object):
         else:
             ipaddr = request.META.get("REMOTE_ADDR", "")
 
+        # get view
+        view_name = ''
+        try:
+            method = request.method.lower()
+            attributes = getattr(self, method)
+            view_name = (type(attributes.__self__).__module__ + '.' +
+                         type(attributes.__self__).__name__)
+        except Exception:
+            pass
+
+        # get the method of the view
+        if hasattr(self, 'action'):
+            view_method = self.action if self.action else ''
+        else:
+            view_method = method.lower()
+
         # save to log
         self.request.log = APIRequestLog.objects.create(
             requested_at=now(),
             path=request.path,
+            view=view_name,
+            view_method=view_method,
             remote_addr=ipaddr,
             host=request.get_host(),
             method=request.method,
