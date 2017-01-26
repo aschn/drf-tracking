@@ -1,8 +1,11 @@
 from django.db import models
 from django.conf import settings
+from django.utils.six import python_2_unicode_compatible
+
 from rest_framework_tracking.managers import PrefetchUserManager
 
 
+@python_2_unicode_compatible
 class BaseAPIRequestLog(models.Model):
     """Logs API requests by time, user, etc"""
     # user or None for anon
@@ -50,6 +53,9 @@ class BaseAPIRequestLog(models.Model):
     class Meta:
         abstract = True
         verbose_name = 'API Request Log'
+
+    def __str__(self):
+        return '{} {}'.format(self.method, self.path)
 
 
 class APIRequestLog(BaseAPIRequestLog):
