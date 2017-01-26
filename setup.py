@@ -76,7 +76,8 @@ setup(
     package_data=get_package_data(package),
     install_requires=[
         'Django>=1.7',
-        'djangorestframework>=3'
+        'djangorestframework>=3',
+        'pytz',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
