@@ -49,6 +49,7 @@ class BaseAPIRequestLog(models.Model):
 
     class Meta:
         abstract = True
+        verbose_name = 'API Request Log'
 
 
 class APIRequestLog(BaseAPIRequestLog):
