@@ -77,7 +77,7 @@ class LoggingMixin(object):
         response = super(LoggingMixin, self).handle_exception(exc)
 
         # log error
-        self.request.log.errors = traceback.format_exc(exc)
+        self.request.log.errors = traceback.format_exc()
         self.request.log.status_code = response.status_code
         self.request.log.save()
 
