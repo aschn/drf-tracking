@@ -191,3 +191,40 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 415)
         self.assertIn('Unsupported media type', log.response)
+
+    def test_log_view_name_api_view(self):
+        self.client.get('/no-view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view, 'tests.views.MockNameAPIView')
+
+    def test_no_log_view_name(self):
+        self.client.post('/view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view, '')
+
+    def test_log_view_name_generic_viewset(self):
+        self.client.get('/view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view, 'tests.views.MockNameViewSet')
+
+    def test_log_view_method_name_api_view(self):
+        self.client.get('/no-view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view_method, 'get')
+
+    def test_no_log_view_method_name(self):
+        self.client.post('/view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view_method, '')
+
+    def test_log_view_method_name_generic_viewset(self):
+        self.client.get('/view-log')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.view_method, 'list')
+
+    def test_log_request_body_parse_error(self):
+        content_type = 'application/json'
+        self.client.post('/400-body-parse-error-logging', 'INVALID JSON', content_type=content_type)
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 400)
+        self.assertIn('parse error', log.response)

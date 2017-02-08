@@ -1,5 +1,4 @@
 from .models import APIRequestLog
-from rest_framework.exceptions import UnsupportedMediaType
 from django.utils.timezone import now
 import traceback
 
@@ -16,14 +15,6 @@ class LoggingMixin(object):
             super(LoggingMixin, self).initial(request, *args, **kwargs)
             return None
 
-        # get data dict
-        try:
-            data_dict = request.data.dict()
-        except AttributeError:  # if already a dict, can't dictify
-            data_dict = request.data
-        except UnsupportedMediaType:
-            data_dict = None
-
         # get IP
         ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
         if ipaddr:
@@ -32,15 +23,32 @@ class LoggingMixin(object):
         else:
             ipaddr = request.META.get("REMOTE_ADDR", "")
 
+        # get view
+        view_name = ''
+        try:
+            method = request.method.lower()
+            attributes = getattr(self, method)
+            view_name = (type(attributes.__self__).__module__ + '.' +
+                         type(attributes.__self__).__name__)
+        except Exception:
+            pass
+
+        # get the method of the view
+        if hasattr(self, 'action'):
+            view_method = self.action if self.action else ''
+        else:
+            view_method = method.lower()
+
         # save to log
         self.request.log = APIRequestLog.objects.create(
             requested_at=now(),
             path=request.path,
+            view=view_name,
+            view_method=view_method,
             remote_addr=ipaddr,
             host=request.get_host(),
             method=request.method,
             query_params=request.query_params.dict(),
-            data=data_dict,
         )
 
         # regular initial, including auth check
@@ -51,7 +59,18 @@ class LoggingMixin(object):
         if user.is_anonymous():
             user = None
         self.request.log.user = user
-        self.request.log.save()
+
+        # get data dict
+        try:
+            # Accessing request.data *for the first time* parses the request body, which may raise
+            # ParseError and UnsupportedMediaType exceptions. It's important not to swallow these,
+            # as (depending on implementation details) they may only get raised this once, and
+            # DRF logic needs them to be raised by the view for error handling to work correctly.
+            self.request.log.data = self.request.data.dict()
+        except AttributeError:  # if already a dict, can't dictify
+            self.request.log.data = self.request.data
+        finally:
+            self.request.log.save()
 
     def handle_exception(self, exc):
         # basic handling
