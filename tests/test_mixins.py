@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import pytest
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+from flaky import flaky
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_tracking.models import APIRequestLog
@@ -61,6 +62,7 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 200)
 
+    @flaky
     def test_log_time_fast(self):
         self.client.get('/logging')
         log = APIRequestLog.objects.first()
