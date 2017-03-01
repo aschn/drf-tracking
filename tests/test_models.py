@@ -76,6 +76,11 @@ class TestAPIRequestLog(TestCase):
                                            status_code=200)
         self.assertEqual(log.status_code, 200)
 
+    def test_errors(self):
+        log = APIRequestLog.objects.create(remote_addr=self.ip, requested_at=now(),
+                                           errors='dummy')
+        self.assertEqual(log.errors, 'dummy')
+
     def test_queries_anon(self):
         for i in range(100):
             APIRequestLog.objects.create(remote_addr=self.ip, requested_at=now())

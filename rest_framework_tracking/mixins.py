@@ -1,5 +1,6 @@
 from .models import APIRequestLog
 from django.utils.timezone import now
+import traceback
 
 
 class LoggingMixin(object):
@@ -70,6 +71,18 @@ class LoggingMixin(object):
             self.request.log.data = self.request.data
         finally:
             self.request.log.save()
+
+    def handle_exception(self, exc):
+        # basic handling
+        response = super(LoggingMixin, self).handle_exception(exc)
+
+        # log error
+        self.request.log.errors = traceback.format_exc()
+        self.request.log.status_code = response.status_code
+        self.request.log.save()
+
+        # return
+        return response
 
     def finalize_response(self, request, response, *args, **kwargs):
         # regular finalize response
