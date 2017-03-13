@@ -101,3 +101,8 @@ class Mock400BodyParseErrorLoggingView(LoggingMixin, APIView):
         # (though only if it's the first access to request.data)
         request.data
         return Response('Data processed')
+
+
+class Mock500ErrorLoggingView(LoggingMixin, APIView):
+    def get(self, request):
+        raise APIException('response')
