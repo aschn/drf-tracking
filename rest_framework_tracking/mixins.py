@@ -41,16 +41,20 @@ class LoggingMixin(object):
             view_method = method.lower()
 
         # save to log
-        self.request.log = APIRequestLog.objects.create(
-            requested_at=now(),
-            path=request.path,
-            view=view_name,
-            view_method=view_method,
-            remote_addr=ipaddr,
-            host=request.get_host(),
-            method=request.method,
-            query_params=_clean_data(request.query_params.dict()),
-        )
+        try:
+            self.request.log = APIRequestLog.objects.create(
+                requested_at=now(),
+                path=request.path,
+                view=view_name,
+                view_method=view_method,
+                remote_addr=ipaddr,
+                host=request.get_host(),
+                method=request.method,
+                query_params=_clean_data(request.query_params.dict()),
+            )
+        except Exception:
+            # tracking db constraints should not create a failure on the API
+            return
 
         # regular initial, including auth check
         super(LoggingMixin, self).initial(request, *args, **kwargs)
