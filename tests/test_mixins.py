@@ -9,6 +9,11 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_tracking.models import APIRequestLog
 
+try:
+    import mock
+except Exception:
+    from unittest import mock
+
 from .views import MockLoggingView
 
 pytestmark = pytest.mark.django_db
@@ -248,3 +253,10 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 400)
         self.assertIn('parse error', log.response)
+
+    @mock.patch('rest_framework_tracking.mixins.APIRequestLog')
+    def test_does_not_crash_on_data_not_fitting_in_the_db(self, mock_apirequestlog):
+        mock_apirequestlog.objects = mock.MagicMock()
+        mock_apirequestlog.objects.create = mock.MagicMock(side_effect=Exception("integrity"))
+        self.client.get('/logging')
+        self.assertEqual(APIRequestLog.objects.all().count(), 0)
