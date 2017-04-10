@@ -96,6 +96,8 @@ class LoggingMixin(object):
         # check if request method is being logged
         if self.logging_methods != '__all__' and request.method not in self.logging_methods:
             return response
+        if not hasattr(self.request, 'log'):
+            return response
 
         # compute response time
         response_timedelta = now() - self.request.log.requested_at
