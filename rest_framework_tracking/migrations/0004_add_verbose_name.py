@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rest_framework_tracking', '0002_auto_20170118_1713'),
+        ('rest_framework_tracking', '0003_add_errors'),
     ]
 
     operations = [
