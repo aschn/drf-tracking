@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import pytest
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+from flaky import flaky
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_tracking.models import APIRequestLog
@@ -61,6 +62,7 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 200)
 
+    @flaky
     def test_log_time_fast(self):
         self.client.get('/logging')
         log = APIRequestLog.objects.first()
@@ -135,6 +137,12 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.query_params, str({u'p1': u'a', u'another': u'2'}))
 
+    def test_log_params_cleaned(self):
+        self.client.get('/logging', {'password': '1234', 'key': '123456'})
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.query_params, str({u'password': '********************',
+                                               u'key': '********************'}))
+
     def test_log_data_empty(self):
         """Default payload is string {}"""
         self.client.post('/logging')
@@ -142,11 +150,23 @@ class TestLoggingMixin(APITestCase):
         self.assertEqual(log.data, str({}))
 
     def test_log_data_json(self):
-        self.client.post('/logging', {'key': 1, 'key2': [{'a': 'b'}]}, format='json')
+        self.client.post('/logging', {'val': 1, 'val2': [{'a': 'b'}]}, format='json')
         log = APIRequestLog.objects.first()
         expected_data = frozenset({  # keys could be either way round
-            str({u'key': 1, u'key2': [{u'a': u'b'}]}),
-            str({u'key2': [{u'a': u'b'}], u'key': 1}),
+            str({u'val': 1, u'val2': [{u'a': u'b'}]}),
+            str({u'val2': [{u'a': u'b'}], u'val': 1}),
+        })
+        self.assertIn(log.data, expected_data)
+
+    def test_log_data_json_cleaned(self):
+        self.client.post('/logging', {'password': '123456', 'val2': [{'val': 'b'}]},
+                         format='json')
+        log = APIRequestLog.objects.first()
+        expected_data = frozenset({  # keys could be either way round
+            str({u'password': '********************',
+                u'val2': [{u'val': u'b'}]}),
+            str({u'val2': [{u'val': u'b'}],
+                u'password': '********************'}),
         })
         self.assertIn(log.data, expected_data)
 
@@ -176,6 +196,14 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 404)
         self.assertIn('Not found', log.response)
+        self.assertIn('Traceback', log.errors)
+
+    def test_log_request_500_error(self):
+        self.client.get('/500-error-logging')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.status_code, 500)
+        self.assertIn('response', log.response)
+        self.assertIn('Traceback', log.errors)
 
     def test_log_request_415_error(self):
         content_type = 'text/plain'

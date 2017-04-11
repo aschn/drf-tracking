@@ -7,6 +7,7 @@ pytest-django>=2.8
 django-environ~=0.4.1
 pytest>=2.7
 pytest-cov>=1.8
+flaky>=3.3.0
 flake8>=2.4
 coveralls==1.1
 

@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import serializers, viewsets, mixins
+from rest_framework.exceptions import APIException
 from rest_framework_tracking.mixins import LoggingMixin
 from rest_framework_tracking.models import APIRequestLog
 from tests.test_serializers import ApiRequestLogSerializer
@@ -69,6 +70,11 @@ class Mock404ErrorLoggingView(LoggingMixin, APIView):
     def get(self, request):
         empty_qs = APIRequestLog.objects.none()
         return get_list_or_404(empty_qs)
+
+
+class Mock500ErrorLoggingView(LoggingMixin, APIView):
+    def get(self, request):
+        raise APIException('response')
 
 
 class Mock415ErrorLoggingView(LoggingMixin, APIView):

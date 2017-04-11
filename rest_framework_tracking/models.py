@@ -44,6 +44,9 @@ class BaseAPIRequestLog(models.Model):
     # response
     response = models.TextField(null=True, blank=True)
 
+    # error traceback
+    errors = models.TextField(null=True, blank=True)
+
     # status code
     status_code = models.PositiveIntegerField(null=True, blank=True)
 
