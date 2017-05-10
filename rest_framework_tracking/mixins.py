@@ -2,6 +2,7 @@ import re
 from .models import APIRequestLog
 from django.utils.timezone import now
 import traceback
+from django.db import transaction
 
 
 class LoggingMixin(object):
@@ -75,7 +76,7 @@ class LoggingMixin(object):
         except AttributeError:  # if already a dict, can't dictify
             self.request.log.data = _clean_data(self.request.data)
         finally:
-            self.request.log.save()
+            transaction.on_commit(self.request.log.save)
 
     def handle_exception(self, exc):
         # basic handling
@@ -84,7 +85,7 @@ class LoggingMixin(object):
         # log error
         self.request.log.errors = traceback.format_exc()
         self.request.log.status_code = response.status_code
-        self.request.log.save()
+        transaction.on_commit(self.request.log.save)
 
         # return
         return response
@@ -107,7 +108,7 @@ class LoggingMixin(object):
         self.request.log.response = response.rendered_content
         self.request.log.status_code = response.status_code
         self.request.log.response_ms = response_ms
-        self.request.log.save()
+        transaction.on_commit(self.request.log.save)
 
         # return
         return response
