@@ -40,21 +40,17 @@ class LoggingMixin(object):
         else:
             view_method = method.lower()
 
-        # save to log
-        try:
-            self.request.log = APIRequestLog.objects.create(
-                requested_at=now(),
-                path=request.path,
-                view=view_name,
-                view_method=view_method,
-                remote_addr=ipaddr,
-                host=request.get_host(),
-                method=request.method,
-                query_params=_clean_data(request.query_params.dict()),
-            )
-        except Exception:
-            # tracking db constraints should not create a failure on the API
-            return
+        # create log
+        self.request.log = APIRequestLog(
+            requested_at=now(),
+            path=request.path,
+            view=view_name,
+            view_method=view_method,
+            remote_addr=ipaddr,
+            host=request.get_host(),
+            method=request.method,
+            query_params=_clean_data(request.query_params.dict()),
+        )
 
         # regular initial, including auth check
         super(LoggingMixin, self).initial(request, *args, **kwargs)
@@ -74,8 +70,6 @@ class LoggingMixin(object):
             self.request.log.data = _clean_data(self.request.data.dict())
         except AttributeError:  # if already a dict, can't dictify
             self.request.log.data = _clean_data(self.request.data)
-        finally:
-            self.request.log.save()
 
     def handle_exception(self, exc):
         # basic handling
