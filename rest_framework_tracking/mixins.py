@@ -78,8 +78,6 @@ class LoggingMixin(object):
         # log error
         if hasattr(self.request, 'log'):
             self.request.log.errors = traceback.format_exc()
-            self.request.log.status_code = response.status_code
-            self.request.log.save()
 
         # return
         return response
