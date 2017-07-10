@@ -24,6 +24,22 @@ drf-tracking provides a Django model and DRF view mixin that work together to lo
 `response` | JSON response data | TextField
 `status_code` | HTTP status code, e.g., `200` or `404` | PositiveIntegerField
 
+## Sensitive data
+Fields containing the following substring will be cleaned:
+* `_api`
+* `api_`
+* `_token`
+* `token_`
+* `_key`
+* `key_`
+* `_secret`
+* `secret_`
+* `_signature`
+* `signature_`
+* `password`
+* `_password`
+* `password_`
+
 
 ## Requirements
 
