@@ -151,8 +151,8 @@ class TestLoggingMixin(APITestCase):
     def test_log_params_suffix_cleaned(self):
         self.client.get('/logging', {'some_password': '1234', 'some_api_key': '123456'})
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.query_params, str({u'stripe_password': '********************',
-                                               u'stripe_api_key': '********************'}))
+        self.assertEqual(log.query_params, str({u'some_password': '********************',
+                                               u'some_api_key': '********************'}))
 
     def test_log_params_prefix_cleaned(self):
         self.client.get('/logging', {'password_generated': '1234', 'token_obtained': '123456'})
@@ -163,10 +163,9 @@ class TestLoggingMixin(APITestCase):
     def test_log_params_former_cleaned(self):
         self.client.get('/logging', {'capitalization_cost': '1234', 'keyless_entry': '123456', 'signature': 'url'})
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.query_params, str({u'password': '1234',
-                                               u'key': '123456',
+        self.assertEqual(log.query_params, str({u'capitalization-cost': '1234',
+                                               u'keyless_entry': '123456',
                                                 u'signature': 'url'}))
-
 
     def test_log_data_empty(self):
         """Default payload is string {}"""
