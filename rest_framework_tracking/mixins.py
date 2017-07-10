@@ -122,7 +122,7 @@ def _clean_data(data):
     (django/django/contrib/auth/__init__.py)
     """
     SENSITIVE_DATA = re.compile('(_api)|(api_)|(_token)|(token_)|(_key)|(key_)|(_secret)|(secret_)|(_password)|'
-                                '(password_)|(password)|(_signature)|(signature_)', re.I)
+                                '(password_)|password|(_signature)|(signature_)', re.I)
     CLEANSED_SUBSTITUTE = '********************'
     for key in data:
         if SENSITIVE_DATA.search(key):
