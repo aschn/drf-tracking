@@ -163,7 +163,7 @@ class TestLoggingMixin(APITestCase):
     def test_log_params_former_cleaned(self):
         self.client.get('/logging', {'capitalization_cost': '1234', 'keyless_entry': '123456', 'signature': 'url'})
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.query_params, str({u'capitalization-cost': u'1234',
+        self.assertEqual(log.query_params, str({u'capitalization_cost': u'1234',
                                                u'keyless_entry': u'123456',
                                                 u'signature': u'url'}))
 
