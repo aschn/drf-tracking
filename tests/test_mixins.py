@@ -5,6 +5,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 from flaky import flaky
+from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_tracking.models import APIRequestLog
@@ -264,9 +265,9 @@ class TestLoggingMixin(APITestCase):
         self.assertEqual(log.status_code, 400)
         self.assertIn('parse error', log.response)
 
-    @mock.patch('rest_framework_tracking.mixins.APIRequestLog')
-    def test_does_not_crash_on_data_not_fitting_in_the_db(self, mock_apirequestlog):
-        mock_apirequestlog.objects = mock.MagicMock()
-        mock_apirequestlog.objects.create = mock.MagicMock(side_effect=Exception("integrity"))
-        self.client.get('/logging')
+    @mock.patch('rest_framework_tracking.models.APIRequestLog.save')
+    def test_log_doesnt_prevent_api_call_if_log_save_fails(self, mock_apirequestlog_save):
+        mock_apirequestlog_save.side_effect = Exception('db failure')
+        response = self.client.get('/logging')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(APIRequestLog.objects.all().count(), 0)

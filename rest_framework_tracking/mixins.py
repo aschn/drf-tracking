@@ -94,7 +94,11 @@ class BaseLoggingMixin(object):
             self.request.log.response = response.rendered_content
             self.request.log.status_code = response.status_code
             self.request.log.response_ms = response_ms
-            self.request.log.save()
+            try:
+                self.request.log.save()
+            except:
+                # ensure that a DB error doesn't prevent API call to continue as expected
+                pass
 
         # return
         return response
