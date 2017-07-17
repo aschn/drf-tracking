@@ -4,7 +4,7 @@ from django.utils.timezone import now
 import traceback
 
 
-class LoggingMixin(object):
+class BaseLoggingMixin(object):
     logging_methods = '__all__'
 
     """Mixin to log requests"""
@@ -46,7 +46,7 @@ class LoggingMixin(object):
         )
 
         # regular initial, including auth check
-        super(LoggingMixin, self).initial(request, *args, **kwargs)
+        super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
 
         # add user to log after auth
         user = request.user
@@ -66,7 +66,7 @@ class LoggingMixin(object):
 
     def handle_exception(self, exc):
         # basic handling
-        response = super(LoggingMixin, self).handle_exception(exc)
+        response = super(BaseLoggingMixin, self).handle_exception(exc)
 
         # log error
         if hasattr(self.request, 'log'):
@@ -77,7 +77,7 @@ class LoggingMixin(object):
 
     def finalize_response(self, request, response, *args, **kwargs):
         # regular finalize response
-        response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+        response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
         # check if request method is being logged
         if self.logging_methods != '__all__' and request.method not in self.logging_methods:
@@ -105,6 +105,18 @@ class LoggingMixin(object):
         By default, check if the request method is in logging_methods.
         """
         return self.logging_methods == '__all__' or request.method in self.logging_methods
+
+
+class LoggingMixin(BaseLoggingMixin):
+    pass
+
+
+class LoggingErrorsMixin(BaseLoggingMixin):
+    """
+    Log only errors
+    """
+    def _should_log(self, request, response):
+        return response.status_code >= 400
 
 
 def _clean_data(data):
