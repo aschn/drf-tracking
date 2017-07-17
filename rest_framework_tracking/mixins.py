@@ -9,13 +9,6 @@ class LoggingMixin(object):
 
     """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
-        """Set current time on request"""
-
-        # check if request method is being logged
-        if self.logging_methods != '__all__' and request.method not in self.logging_methods:
-            super(LoggingMixin, self).initial(request, *args, **kwargs)
-            return None
-
         # get IP
         ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
         if ipaddr:
@@ -86,9 +79,7 @@ class LoggingMixin(object):
         # regular finalize response
         response = super(LoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
-        # check if request method is being logged
-        if self.logging_methods != '__all__' and request.method not in self.logging_methods:
-            return response
+        # check if request is being logged
         if not hasattr(self.request, 'log'):
             return response
 
@@ -97,17 +88,25 @@ class LoggingMixin(object):
         response_ms = int(response_timedelta.total_seconds() * 1000)
 
         # save to log
-        self.request.log.response = response.rendered_content
-        self.request.log.status_code = response.status_code
-        self.request.log.response_ms = response_ms
-        try:
-            self.request.log.save()
-        except:
-            # ensure that a DB error doesn't prevent API call to continue as expected
-            pass
+        if (self._should_log(request, response)):
+            self.request.log.response = response.rendered_content
+            self.request.log.status_code = response.status_code
+            self.request.log.response_ms = response_ms
+            try:
+                self.request.log.save()
+            except:
+                # ensure that a DB error doesn't prevent API call to continue as expected
+                pass
 
         # return
         return response
+
+    def _should_log(self, request, response):
+        """
+        Method that should return True if this request should be logged.
+        By default, check if the request method is in logging_methods.
+        """
+        return self.logging_methods == '__all__' or request.method in self.logging_methods
 
 
 def _clean_data(data):
