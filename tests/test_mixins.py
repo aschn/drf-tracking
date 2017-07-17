@@ -94,6 +94,11 @@ class TestLoggingMixin(APITestCase):
         self.client.post('/explicit-logging')
         self.assertEqual(APIRequestLog.objects.all().count(), 1)
 
+    def test_custom_check_logging(self):
+        self.client.get('/custom-check-logging')
+        self.client.post('/custom-check-logging')
+        self.assertEqual(APIRequestLog.objects.all().count(), 1)
+
     def test_log_anon_user(self):
         self.client.get('/logging')
         log = APIRequestLog.objects.first()
