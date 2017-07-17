@@ -80,8 +80,6 @@ class BaseLoggingMixin(object):
         response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
         # check if request method is being logged
-        if self.logging_methods != '__all__' and request.method not in self.logging_methods:
-            return response
         if not hasattr(self.request, 'log'):
             return response
 

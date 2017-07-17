@@ -38,6 +38,8 @@ class MockExplicitLoggingView(LoggingMixin, APIView):
 
 
 class MockCustomCheckLoggingView(LoggingMixin, APIView):
+    logging_methods = []
+
     def _should_log(self, request, response):
         """
         Log only if response contains 'log'
