@@ -37,6 +37,20 @@ class MockExplicitLoggingView(LoggingMixin, APIView):
         return Response('with logging')
 
 
+class MockCustomCheckLoggingView(LoggingMixin, APIView):
+    def _should_log(self, request, response):
+        """
+        Log only if response contains 'log'
+        """
+        return 'log' in response.data
+
+    def get(self, request):
+        return Response('with logging')
+
+    def post(self, request):
+        return Response('no recording')
+
+
 class MockSessionAuthLoggingView(LoggingMixin, APIView):
     authentication_classes = (SessionAuthentication,)
     permission_classes = (IsAuthenticated,)
