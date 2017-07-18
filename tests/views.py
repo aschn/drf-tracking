@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import serializers, viewsets, mixins
 from rest_framework.exceptions import APIException
-from rest_framework_tracking.mixins import LoggingMixin
+from rest_framework_tracking.mixins import LoggingErrorsMixin, LoggingMixin
 from rest_framework_tracking.models import APIRequestLog
 from tests.test_serializers import ApiRequestLogSerializer
 import time
@@ -35,6 +35,28 @@ class MockExplicitLoggingView(LoggingMixin, APIView):
 
     def post(self, request):
         return Response('with logging')
+
+
+class MockCustomCheckLoggingView(LoggingMixin, APIView):
+    def _should_log(self, request, response):
+        """
+        Log only if response contains 'log'
+        """
+        return 'log' in response.data
+
+    def get(self, request):
+        return Response('with logging')
+
+    def post(self, request):
+        return Response('no recording')
+
+
+class MockLoggingErrorsView(LoggingErrorsMixin, APIView):
+    def get(self, request):
+        raise APIException('with logging')
+
+    def post(self, request):
+        return Response('no logging')
 
 
 class MockSessionAuthLoggingView(LoggingMixin, APIView):
