@@ -156,7 +156,7 @@ deploy:
   user: avelis
   password:
     secure: KmuHbNvBb8XjfY00YU5ft2znr7yK+9krLdjihqffSaVLFVyLKwd2RMXC/6Vguzk6si6N/4pWc9315p/SNrh/Sn50+RQhoNdLsga6HO2qA7fo3Ycy5xycPi/RJDuA9BG2QBmkn79rVgJ5wZrTxt/qn1P267jeVkIPA0wjNQsmtF9iq9EjIhrtvLrHlXmcJouQAt7qLua417ZAeecFDEu4H445q7N8G/9jWWozxlX0R6iYnKL7zcduHgAJfELn5nKsziDwcqme4bJHAkaRUbjm0ARfV1m+Ww5xMl1rwGUGu7TbY7I28u56WVfuapRTE7IhL9rdqUEIyHVgCEjXbV0gbZPM0slK6HU7IdMBuCGKQkGN9rnBTWoXFgjXBRvyAGJqM8sB1DvQTra0BY/R9KgrsvEcl5o8dRKp1U0GM7XlGXZA5wBkSPzz+Yo1ZiSq1k72zZBoX0je3NaJfgXuGfKDe/H7/OgS3dtC368SLNW3J2TRetYj50tZSm05PMxogyzeaMkSjmXoy9rFeEQcDE+sOWX1WGJytg8P9gFLsH1gIRIUCHuwc/sMb2UQxoj//8UM9f9c8YTAwL/Ox7FhI6n8VY2R3msWGrsS29YEk+IF/r77vQ/CyXNbUtUJLRfwRR2++kr25OaAZ28ikMblCaZ3a7BLlxnYOxdSpHoLzl2P+1I=
-  on:
+  distributions: "sdist bdist_wheel"
+on:
     tags: true
-    distributions: "sdist bdist_wheel"
     repo: aschn/drf-tracking
