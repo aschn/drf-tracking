@@ -1,2 +1,2 @@
-__version__ = '1.2.0'
+__version__ = '1.3.1'
 default_app_config = 'rest_framework_tracking.apps.RestFrameworkTrackingConfig'
