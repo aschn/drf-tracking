@@ -62,7 +62,7 @@ class BaseLoggingMixin(object):
             # DRF logic needs them to be raised by the view for error handling to work correctly.
             self.request.log.data = _clean_data(self.request.data.dict())
         except AttributeError:  # if already a dict, can't dictify
-            self.request.log.data = _clean_data(self.request.data)
+            self.request.log.data = _clean_data(dict(self.request.data))
 
     def handle_exception(self, exc):
         # basic handling
