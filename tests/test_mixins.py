@@ -153,11 +153,30 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.query_params, str({u'p1': u'a', u'another': u'2'}))
 
-    def test_log_params_cleaned(self):
+    def test_log_params_regular_cleaned(self):
         self.client.get('/logging', {'password': '1234', 'key': '123456'})
         log = APIRequestLog.objects.first()
         self.assertEqual(log.query_params, str({u'password': '********************',
-                                               u'key': '********************'}))
+                                               u'key': u'123456'}))
+
+    def test_log_params_suffix_cleaned(self):
+        self.client.get('/logging', {'some_password': '1234', 'some_api_key': '123456'})
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.query_params, str({u'some_password': '********************',
+                                               u'some_api_key': '********************'}))
+
+    def test_log_params_prefix_cleaned(self):
+        self.client.get('/logging', {'password_generated': '1234', 'token_obtained': '123456'})
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.query_params, str({u'password_generated': '********************',
+                                               u'token_obtained': '********************'}))
+
+    def test_log_params_former_cleaned(self):
+        self.client.get('/logging', {'capitalization_cost': '1234', 'keyless_entry': '123456', 'signature': 'url'})
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.query_params, str({u'capitalization_cost': u'1234',
+                                               u'keyless_entry': u'123456',
+                                                u'signature': u'url'}))
 
     def test_log_data_empty(self):
         """Default payload is string {}"""
