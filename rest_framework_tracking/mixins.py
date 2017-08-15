@@ -128,6 +128,7 @@ def _clean_data(data):
     Function based on the "_clean_credentials" function of django
     (django/django/contrib/auth/__init__.py)
     """
+    data = dict(data)
     SENSITIVE_DATA = re.compile('api|token|key|secret|password|signature', re.I)
     CLEANSED_SUBSTITUTE = '********************'
     for key in data:
