@@ -37,6 +37,13 @@ class MockExplicitLoggingView(LoggingMixin, APIView):
         return Response('with logging')
 
 
+class MockSensitiveFieldsLoggingView(LoggingMixin, APIView):
+    sensitive_fields = ['mY_fiEld']
+
+    def get(self, request):
+        return Response('with logging')
+
+
 class MockCustomCheckLoggingView(LoggingMixin, APIView):
     def _should_log(self, request, response):
         """

@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 import pytest
+import ast
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 from flaky import flaky
@@ -154,10 +155,12 @@ class TestLoggingMixin(APITestCase):
         self.assertEqual(log.query_params, str({u'p1': u'a', u'another': u'2'}))
 
     def test_log_params_cleaned(self):
-        self.client.get('/logging', {'password': '1234', 'key': '123456'})
+        self.client.get('/logging', {'password': '1234', 'key': '12345', 'secret': '123456'})
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.query_params, str({u'password': '********************',
-                                               u'key': '********************'}))
+        self.assertEqual(ast.literal_eval(log.query_params), {
+                         u'password': '********************',
+                         u'key': '********************',
+                         u'secret': '********************'})
 
     def test_log_data_empty(self):
         """Default payload is string {}"""
@@ -185,6 +188,23 @@ class TestLoggingMixin(APITestCase):
                 u'password': '********************'}),
         })
         self.assertIn(log.data, expected_data)
+
+    def test_log_exact_match_params_cleaned(self):
+        self.client.get('/logging', {'api': '1234', 'capitalized': '12345', 'keyword': '123456'})
+        log = APIRequestLog.objects.first()
+        self.assertEqual(ast.literal_eval(log.query_params), {
+                         u'api': '********************',
+                         u'capitalized': '12345',
+                         u'keyword': '123456'})
+
+    def test_log_params_cleaned_from_personal_list(self):
+        self.client.get('/sensitive-fields-logging',
+                        {'api': '1234', 'capitalized': '12345', 'my_field': '123456'})
+        log = APIRequestLog.objects.first()
+        self.assertEqual(ast.literal_eval(log.query_params), {
+                         u'api': '********************',
+                         u'capitalized': '12345',
+                         u'my_field': '********************'})
 
     def test_log_text_response(self):
         self.client.get('/logging')
