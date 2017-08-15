@@ -152,7 +152,7 @@ class TestLoggingMixin(APITestCase):
     def test_log_params(self):
         self.client.get('/logging', {'p1': 'a', 'another': '2'})
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.query_params, str({u'p1': u'a', u'another': u'2'}))
+        self.assertEqual(ast.literal_eval(log.query_params), {u'p1': u'a', u'another': u'2'})
 
     def test_log_params_cleaned(self):
         self.client.get('/logging', {'password': '1234', 'key': '12345', 'secret': '123456'})
