@@ -70,6 +70,18 @@ class LoggingView(LoggingMixin, generics.CreateModelMixin, generics.GenericAPIVi
     model = ...
 ```
 
+## Security
+
+By default drf-tracking is hidding the values of those fields `['api', 'token', 'key', 'secret', 'password', 'signature']`.
+The default list hast been taken from Django itself ([https://github.com/django/django/blob/stable/1.11.x/django/contrib/auth/__init__.py#L50](https://github.com/django/django/blob/stable/1.11.x/django/contrib/auth/__init__.py#L50)).
+
+You can complet this list with your own list by putting the fields you want to be hidden in the `sensitive_fields` parameter of your view
+
+```python
+class LoggingView(LoggingMixin, generics.CreateModelMixin, generics.GenericAPIView):
+    sensitive_fields = ['my_secret_key', 'my_secret_recipe']
+```
+
 ## Testing
 
 Install testing requirements.

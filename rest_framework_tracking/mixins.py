@@ -1,4 +1,3 @@
-import re
 from .models import APIRequestLog
 from django.utils.timezone import now
 import traceback
@@ -6,6 +5,7 @@ import traceback
 
 class BaseLoggingMixin(object):
     logging_methods = '__all__'
+    sensitive_fields = []
 
     """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
@@ -42,7 +42,7 @@ class BaseLoggingMixin(object):
             remote_addr=ipaddr,
             host=request.get_host(),
             method=request.method,
-            query_params=_clean_data(request.query_params.dict()),
+            query_params=self._clean_data(request.query_params.dict()),
         )
 
         # regular initial, including auth check
@@ -60,9 +60,9 @@ class BaseLoggingMixin(object):
             # ParseError and UnsupportedMediaType exceptions. It's important not to swallow these,
             # as (depending on implementation details) they may only get raised this once, and
             # DRF logic needs them to be raised by the view for error handling to work correctly.
-            self.request.log.data = _clean_data(self.request.data.dict())
+            self.request.log.data = self._clean_data(self.request.data.dict())
         except AttributeError:  # if already a dict, can't dictify
-            self.request.log.data = _clean_data(self.request.data)
+            self.request.log.data = self._clean_data(self.request.data)
 
     def handle_exception(self, exc):
         # basic handling
@@ -94,7 +94,7 @@ class BaseLoggingMixin(object):
             self.request.log.response_ms = response_ms
             try:
                 self.request.log.save()
-            except:
+            except Exception:
                 # ensure that a DB error doesn't prevent API call to continue as expected
                 pass
 
@@ -108,6 +108,31 @@ class BaseLoggingMixin(object):
         """
         return self.logging_methods == '__all__' or request.method in self.logging_methods
 
+    def _clean_data(self, data):
+        """
+        Clean a dictionary of data of potentially sensitive info before
+        sending to the database.
+        Function based on the "_clean_credentials" function of django
+        (https://github.com/django/django/blob/stable/1.11.x/django/contrib/auth/__init__.py#L50)
+
+        Fields defined by django are by default cleaned with this function
+
+        You can define your own sensitive fields in your view by defining a list
+        eg: sensitive_fields = ['field1', 'field2']
+        """
+        data = dict(data)
+
+        SENSITIVE_FIELDS = ['api', 'token', 'key', 'secret', 'password', 'signature']
+        CLEANED_SUBSTITUTE = '********************'
+
+        if self.sensitive_fields:
+            SENSITIVE_FIELDS += [field.lower() for field in self.sensitive_fields]
+
+        for key in data:
+            if key.lower() in SENSITIVE_FIELDS:
+                data[key] = CLEANED_SUBSTITUTE
+        return data
+
 
 class LoggingMixin(BaseLoggingMixin):
     pass
@@ -119,18 +144,3 @@ class LoggingErrorsMixin(BaseLoggingMixin):
     """
     def _should_log(self, request, response):
         return response.status_code >= 400
-
-
-def _clean_data(data):
-    """
-    Clean a dictionary of data of potentially sensitive info before
-    sending to the database.
-    Function based on the "_clean_credentials" function of django
-    (django/django/contrib/auth/__init__.py)
-    """
-    SENSITIVE_DATA = re.compile('api|token|key|secret|password|signature', re.I)
-    CLEANSED_SUBSTITUTE = '********************'
-    for key in data:
-        if SENSITIVE_DATA.search(key):
-            data[key] = CLEANSED_SUBSTITUTE
-    return data
