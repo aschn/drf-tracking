@@ -5,7 +5,7 @@ import traceback
 
 class BaseLoggingMixin(object):
     logging_methods = '__all__'
-    sensitive_fields = []
+    sensitive_fields = {}
 
     """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
@@ -117,16 +117,16 @@ class BaseLoggingMixin(object):
 
         Fields defined by django are by default cleaned with this function
 
-        You can define your own sensitive fields in your view by defining a list
-        eg: sensitive_fields = ['field1', 'field2']
+        You can define your own sensitive fields in your view by defining a set
+        eg: sensitive_fields = {'field1', 'field2'}
         """
         data = dict(data)
 
-        SENSITIVE_FIELDS = ['api', 'token', 'key', 'secret', 'password', 'signature']
+        SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
         CLEANED_SUBSTITUTE = '********************'
 
         if self.sensitive_fields:
-            SENSITIVE_FIELDS += [field.lower() for field in self.sensitive_fields]
+            SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
         for key in data:
             if key.lower() in SENSITIVE_FIELDS:
