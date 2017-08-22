@@ -38,7 +38,7 @@ class MockExplicitLoggingView(LoggingMixin, APIView):
 
 
 class MockSensitiveFieldsLoggingView(LoggingMixin, APIView):
-    sensitive_fields = ['mY_fiEld']
+    sensitive_fields = {'mY_fiEld'}
 
     def get(self, request):
         return Response('with logging')
