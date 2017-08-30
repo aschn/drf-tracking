@@ -1,7 +1,9 @@
 import ast
-from .models import APIRequestLog
-from django.utils.timezone import now
 import traceback
+
+from django.utils.timezone import now
+
+from rest_framework_tracking.models import APIRequestLog
 
 
 class BaseLoggingMixin(object):
@@ -11,16 +13,13 @@ class BaseLoggingMixin(object):
 
     logging_methods = '__all__'
     sensitive_fields = {}
+    log = {}
 
     def __init__(self, *args, **kwargs):
         assert isinstance(self.CLEANED_SUBSTITUTE, str), 'CLEANED_SUBSTITUTE must be a string.'
         super(BaseLoggingMixin, self).__init__(*args, **kwargs)
 
     def initial(self, request, *args, **kwargs):
-        self.log = {}
-        self.log['requested_at'] = now()
-        self.log['data'] = request.body
-
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
 
         try:
@@ -31,7 +30,9 @@ class BaseLoggingMixin(object):
             data = self.request.data.dict()
         except AttributeError:
             data = self.request.data
+
         self.log['data'] = data
+        self.log['requested_at'] = now()
 
     def handle_exception(self, exc):
         response = super(BaseLoggingMixin, self).handle_exception(exc)
@@ -121,7 +122,7 @@ class BaseLoggingMixin(object):
         response_ms = int(response_timedelta.total_seconds() * 1000)
         return max(response_ms, 0)
 
-    def should_log(self, request, response):
+    def should_log(self, request, _):
         """
         Method that should return a value that evaluated to True if the request should be logged.
         By default, check if the request method is in logging_methods.
@@ -147,8 +148,7 @@ class BaseLoggingMixin(object):
             SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
 
             data = dict(data)
-            if self.sensitive_fields:
-                SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
+            SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
             for key, value in data.items():
                 try:
