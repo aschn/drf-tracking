@@ -10,6 +10,7 @@ class BaseLoggingMixin(object):
     """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
         # get IP
+
         ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
         if ipaddr:
             # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
@@ -34,7 +35,9 @@ class BaseLoggingMixin(object):
             view_method = method.lower()
 
         # create log
-        self.request.log = APIRequestLog(
+        qm = self._clean_data(request.query_params.dict())
+
+        self.log = APIRequestLog(
             requested_at=now(),
             path=request.path,
             view=view_name,
@@ -42,17 +45,18 @@ class BaseLoggingMixin(object):
             remote_addr=ipaddr,
             host=request.get_host(),
             method=request.method,
-            query_params=self._clean_data(request.query_params.dict()),
+            query_params=qm,
         )
 
         # regular initial, including auth check
-        super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
+        if kwargs.get('middleware') is not True:
+            super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
 
         # add user to log after auth
         user = request.user
         if user.is_anonymous():
             user = None
-        self.request.log.user = user
+        self.log.user = user
 
         # get data dict
         try:
@@ -60,40 +64,39 @@ class BaseLoggingMixin(object):
             # ParseError and UnsupportedMediaType exceptions. It's important not to swallow these,
             # as (depending on implementation details) they may only get raised this once, and
             # DRF logic needs them to be raised by the view for error handling to work correctly.
-            self.request.log.data = self._clean_data(self.request.data.dict())
+            self.log.data = self._clean_data(request.data.dict())
         except AttributeError:  # if already a dict, can't dictify
-            self.request.log.data = self._clean_data(self.request.data)
+            self.log.data = self._clean_data(request.data)
 
-    def handle_exception(self, exc):
-        # basic handling
-        response = super(BaseLoggingMixin, self).handle_exception(exc)
-
+    def handle_exception(self, exc, **kwargs):
         # log error
-        if hasattr(self.request, 'log'):
-            self.request.log.errors = traceback.format_exc()
+        if hasattr(self, 'log'):
+            self.log.errors = traceback.format_exc()
 
-        # return
-        return response
+        # basic handling
+        if kwargs.get('middleware') is not True:
+            return super(BaseLoggingMixin, self).handle_exception(exc)
 
     def finalize_response(self, request, response, *args, **kwargs):
         # regular finalize response
-        response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+        if kwargs.get('middleware') is not True:
+            response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
         # check if request is being logged
-        if not hasattr(self.request, 'log'):
+        if not hasattr(self, 'log'):
             return response
 
         # compute response time
-        response_timedelta = now() - self.request.log.requested_at
+        response_timedelta = now() - self.log.requested_at
         response_ms = int(response_timedelta.total_seconds() * 1000)
 
         # save to log
         if (self._should_log(request, response)):
-            self.request.log.response = response.rendered_content
-            self.request.log.status_code = response.status_code
-            self.request.log.response_ms = response_ms
+            self.log.response = response.rendered_content
+            self.log.status_code = response.status_code
+            self.log.response_ms = response_ms
             try:
-                self.request.log.save()
+                self.log.save()
             except Exception:
                 # ensure that a DB error doesn't prevent API call to continue as expected
                 pass
