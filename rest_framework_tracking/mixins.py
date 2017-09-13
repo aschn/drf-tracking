@@ -151,4 +151,4 @@ class LoggingErrorsMixin(BaseLoggingMixin):
     Log only errors
     """
     def _should_log(self, request, response):
-i        return response.status_code >= 400
+        return response.status_code >= 400
