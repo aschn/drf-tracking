@@ -129,11 +129,13 @@ class BaseLoggingMixin(object):
             SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
         if type(data) is list:
+            data = list(data)
             for data_list in data:
                 for key in data_list:
                     if key.lower() in SENSITIVE_FIELDS:
                         data[key] = CLEANED_SUBSTITUTE
         else:
+            data = dict(data)
             for key in data:
                 if key.lower() in SENSITIVE_FIELDS:
                     data[key] = CLEANED_SUBSTITUTE
@@ -149,4 +151,4 @@ class LoggingErrorsMixin(BaseLoggingMixin):
     Log only errors
     """
     def _should_log(self, request, response):
-        return response.status_code >= 400
+i        return response.status_code >= 400
