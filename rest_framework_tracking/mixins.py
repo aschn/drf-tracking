@@ -1,8 +1,13 @@
+import logging
 import traceback
 
+from django.conf import settings
 from django.utils.timezone import now
 
+from rest_framework_tracking.elastic_client import ElasticClient
 from rest_framework_tracking.models import APIRequestLog
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoggingMixin(object):
@@ -27,6 +32,8 @@ class BaseLoggingMixin(object):
         "response_ms": '',
         "errors": '',
     }
+    # Elastic search config
+    elasticsearch_enabled = hasattr(settings, 'DRF_TRACKING_ELASTIC_CONFIG')
 
     def initial(self, request, *args, **kwargs):
         # get IP
@@ -65,12 +72,13 @@ class BaseLoggingMixin(object):
 
         # regular initial, including auth check
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
-
         # add user to log after auth
         user = request.user
         if user.is_anonymous():
-            user = None
-        self.log['user'] = user
+            user_id = None
+        else:
+            user_id = user.id
+        self.log['user'] = user_id
 
         # get data dict
         try:
@@ -111,8 +119,9 @@ class BaseLoggingMixin(object):
             self.log['response_ms'] = response_ms
             try:
                 self._save_log_data(self.log)
-            except Exception:
+            except Exception as e:
                 # ensure that a DB error doesn't prevent API call to continue as expected
+                logger.exception(e)
                 pass
 
         return response
@@ -150,8 +159,16 @@ class BaseLoggingMixin(object):
         return data
 
     def _save_log_data(self, data):
-        apirequest = APIRequestLog(**data)
-        apirequest.save()
+        """
+        Check if options for elasticsearch are configured and save data either in elastic search or
+        in the database configured for the django project
+        """
+        if self.elasticsearch_enabled:
+            elastic = ElasticClient()
+            elastic.add_api_log(data)
+        else:
+            apirequest = APIRequestLog(**data)
+            apirequest.save()
 
 
 class LoggingMixin(BaseLoggingMixin):
