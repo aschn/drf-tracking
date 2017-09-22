@@ -1,9 +1,14 @@
 import ast
+import logging
 import traceback
 
+from django.conf import settings
 from django.utils.timezone import now
 
+from rest_framework_tracking.elastic_client import ElasticClient
 from rest_framework_tracking.models import APIRequestLog
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoggingMixin(object):
@@ -14,6 +19,8 @@ class BaseLoggingMixin(object):
     logging_methods = '__all__'
     sensitive_fields = {}
     log = {}
+    # Elastic search config
+    elasticsearch_enabled = hasattr(settings, 'DRF_TRACKING_ELASTIC_CONFIG')
 
     def __init__(self, *args, **kwargs):
         assert isinstance(self.CLEANED_SUBSTITUTE, str), 'CLEANED_SUBSTITUTE must be a string.'
@@ -41,7 +48,8 @@ class BaseLoggingMixin(object):
         return response
 
     def finalize_response(self, request, response, *args, **kwargs):
-        response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+        response = super(BaseLoggingMixin, self).finalize_response(request, response, *args,
+                                                                   **kwargs)
 
         # Ensure backward compatibility for those using _should_log hook
         should_log = self._should_log if hasattr(self, '_should_log') else self.should_log
@@ -66,10 +74,10 @@ class BaseLoggingMixin(object):
             )
             try:
                 self.handle_log()
-            except Exception:
+            except Exception as e:
                 # ensure that all exceptions raised by handle_log
                 # doesn't prevent API call to continue as expected
-                pass
+                logger.exception(e)
 
         return response
 
@@ -77,9 +85,14 @@ class BaseLoggingMixin(object):
         """
         Hook to define what happens with the log.
 
-        Defaults on saving the data on the db.
+        Check if options for elasticsearch are configured and save data either
+        in elastic search or, by default, in the database configured for the django project
         """
-        APIRequestLog(**self.log).save()
+        if self.elasticsearch_enabled:
+            elastic = ElasticClient()
+            elastic.add_api_log(self.data)
+        else:
+            APIRequestLog(**self.data).save()
 
     def _get_ip_address(self, request):
         """Get the remote ip address the request was generated from. """

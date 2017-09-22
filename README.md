@@ -131,6 +131,30 @@ class LoggingView(LoggingMixin, generics.GenericAPIView):
             super(MockCustomLogHandlerView, self).handle_log()
 ```
 
+## Storage
+
+### Database (default)
+
+By default, DRF-tracking will use the database as a storage for the logs. As soon as you have a working DB configured, you're good to go. There is nothing to do except a migration
+
+### Elasticsearch
+
+You can specifie an elasticsearch cluster to enable the logs to elasticsearch. It will disable the
+logs in your database and send it directly to ES.
+
+You have to put in your django settings:
+
+```python
+DRF_TRACKING_ELASTIC_CONFIG = [{
+    "host": "localhost",
+    "port": 9200,
+    "http_auth": ('my-user', 'my-password')
+}]
+DRF_TRACKING_ELASTIC_INDEX = 'my-index'
+```
+
+every config that you put in `DRF_TRACKING_ELASTIC_CONFIG` will be directly put in the elasticsearch
+connection.
 
 ## Security
 
