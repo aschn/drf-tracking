@@ -73,12 +73,13 @@ class TestLoggingMixin(APITestCase):
     def test_log_time_fast(self):
         self.client.get('/logging')
         log = APIRequestLog.objects.first()
-
         # response time is very short
         self.assertLessEqual(log.response_ms, 20)
 
         # request_at is time of request, not response
-        self.assertGreaterEqual((now() - log.requested_at).total_seconds(), 0.002)
+        threshold = 0.002
+        saved_delay = (now() - log.requested_at).total_seconds()
+        self.assertAlmostEqual(threshold, saved_delay, 2)
 
     def test_log_time_slow(self):
         self.client.get('/slow-logging')
