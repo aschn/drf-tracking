@@ -145,16 +145,17 @@ logs in your database and send it directly to ES.
 You have to put in your django settings:
 
 ```python
-DRF_TRACKING_ELASTIC_CONFIG = [{
+DRF_TRACKING_ELASTIC_CONFIG = {
     "host": "localhost",
     "port": 9200,
     "http_auth": ('my-user', 'my-password')
-}]
-DRF_TRACKING_ELASTIC_INDEX = 'my-index'
+}
+DRF_TRACKING_ELASTIC_INDEX = 'my-index'  # lowercase
 ```
 
-every config that you put in `DRF_TRACKING_ELASTIC_CONFIG` will be directly put in the elasticsearch
-connection.
+every config that you put in `DRF_TRACKING_ELASTIC_CONFIG` will be directly put in the elasticsearch connection.
+
+More informations here [https://elasticsearch-py.readthedocs.io/en/master/connection.html#urllib3httpconnection-default-connection-class](https://elasticsearch-py.readthedocs.io/en/master/connection.html#urllib3httpconnection-default-connection-class)
 
 ## Security
 
