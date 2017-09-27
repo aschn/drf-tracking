@@ -75,10 +75,8 @@ class BaseLoggingMixin(object):
         # add user to log after auth
         user = request.user
         if user.is_anonymous():
-            user_id = None
-        else:
-            user_id = user.id
-        self.log['user'] = user_id
+            user = None
+        self.log['user'] = user
 
         # get data dict
         try:
