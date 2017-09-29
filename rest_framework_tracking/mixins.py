@@ -1,13 +1,40 @@
-from .models import APIRequestLog
-from django.utils.timezone import now
+import logging
 import traceback
+
+from django.conf import settings
+from django.utils.timezone import now
+
+from rest_framework_tracking.elastic_client import ElasticClient
+from rest_framework_tracking.models import APIRequestLog
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoggingMixin(object):
+    """Mixin to log requests"""
+
     logging_methods = '__all__'
     sensitive_fields = {}
+    # Internal usage
+    log = {
+        "requested_at": '',
+        "path": '',
+        "view": '',
+        "view_method": '',
+        "remote_addr": '',
+        "host": '',
+        "method": '',
+        "query_params": '',
+        "data": '',
+        "user": '',
+        "response": '',
+        "status_code": '',
+        "response_ms": '',
+        "errors": '',
+    }
+    # Elastic search config
+    elasticsearch_enabled = hasattr(settings, 'DRF_TRACKING_ELASTIC_CONFIG')
 
-    """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
         # get IP
         ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
@@ -33,26 +60,23 @@ class BaseLoggingMixin(object):
         else:
             view_method = method.lower()
 
-        # create log
-        self.request.log = APIRequestLog(
-            requested_at=now(),
-            path=request.path,
-            view=view_name,
-            view_method=view_method,
-            remote_addr=ipaddr,
-            host=request.get_host(),
-            method=request.method,
-            query_params=self._clean_data(request.query_params.dict()),
-        )
+        # save first part of the information
+        self.log['requested_at'] = now()
+        self.log['path'] = request.path
+        self.log['view'] = view_name
+        self.log['view_method'] = view_method
+        self.log['remote_addr'] = ipaddr
+        self.log['host'] = request.get_host()
+        self.log['method'] = request.method
+        self.log['query_params'] = self._clean_data(request.query_params.dict())
 
         # regular initial, including auth check
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
-
         # add user to log after auth
         user = request.user
         if user.is_anonymous():
             user = None
-        self.request.log.user = user
+        self.log['user'] = user
 
         # get data dict
         try:
@@ -60,45 +84,44 @@ class BaseLoggingMixin(object):
             # ParseError and UnsupportedMediaType exceptions. It's important not to swallow these,
             # as (depending on implementation details) they may only get raised this once, and
             # DRF logic needs them to be raised by the view for error handling to work correctly.
-            self.request.log.data = self._clean_data(self.request.data.dict())
+            self.log['data'] = self._clean_data(self.request.data.dict())
         except AttributeError:  # if already a dict, can't dictify
-            self.request.log.data = self._clean_data(self.request.data)
+            self.log['data'] = self._clean_data(self.request.data)
 
     def handle_exception(self, exc):
         # basic handling
         response = super(BaseLoggingMixin, self).handle_exception(exc)
-
         # log error
-        if hasattr(self.request, 'log'):
-            self.request.log.errors = traceback.format_exc()
+        if hasattr(self, 'log'):
+            self.log['errors'] = traceback.format_exc()
 
-        # return
         return response
 
     def finalize_response(self, request, response, *args, **kwargs):
         # regular finalize response
-        response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+        response = super(BaseLoggingMixin, self).finalize_response(request, response, *args,
+                                                                   **kwargs)
 
         # check if request is being logged
-        if not hasattr(self.request, 'log'):
+        if not self.log['requested_at']:
             return response
 
         # compute response time
-        response_timedelta = now() - self.request.log.requested_at
+        response_timedelta = now() - self.log['requested_at']
         response_ms = int(response_timedelta.total_seconds() * 1000)
 
         # save to log
         if (self._should_log(request, response)):
-            self.request.log.response = response.rendered_content
-            self.request.log.status_code = response.status_code
-            self.request.log.response_ms = response_ms
+            self.log['response'] = response.rendered_content
+            self.log['status_code'] = response.status_code
+            self.log['response_ms'] = response_ms
             try:
-                self.request.log.save()
-            except Exception:
+                self._save_log_data(self.log)
+            except Exception as e:
                 # ensure that a DB error doesn't prevent API call to continue as expected
+                logger.exception(e)
                 pass
 
-        # return
         return response
 
     def _should_log(self, request, response):
@@ -132,6 +155,18 @@ class BaseLoggingMixin(object):
             if key.lower() in SENSITIVE_FIELDS:
                 data[key] = CLEANED_SUBSTITUTE
         return data
+
+    def _save_log_data(self, data):
+        """
+        Check if options for elasticsearch are configured and save data either in elastic search or
+        in the database configured for the django project
+        """
+        if self.elasticsearch_enabled:
+            elastic = ElasticClient()
+            elastic.add_api_log(data)
+        else:
+            apirequest = APIRequestLog(**data)
+            apirequest.save()
 
 
 class LoggingMixin(BaseLoggingMixin):
