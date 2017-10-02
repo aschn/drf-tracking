@@ -121,7 +121,7 @@ class BaseLoggingMixin(object):
         You can define your own sensitive fields in your view by defining a set
         eg: sensitive_fields = {'field1', 'field2'}
         """
-        data = dict(data)
+        # data = dict(data)
 
         SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
         CLEANED_SUBSTITUTE = '********************'
@@ -129,9 +129,17 @@ class BaseLoggingMixin(object):
         if self.sensitive_fields:
             SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
-        for key in data:
-            if key.lower() in SENSITIVE_FIELDS:
-                data[key] = CLEANED_SUBSTITUTE
+        if type(data) is list:
+            data = list(data)
+            for data_list in data:
+                for key in data_list:
+                    if key.lower() in SENSITIVE_FIELDS:
+                        data[key] = CLEANED_SUBSTITUTE
+        else:
+            data = dict(data)
+            for key in data:
+                if key.lower() in SENSITIVE_FIELDS:
+                    data[key] = CLEANED_SUBSTITUTE
         return data
 
 

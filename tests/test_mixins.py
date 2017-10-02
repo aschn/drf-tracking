@@ -179,6 +179,26 @@ class TestLoggingMixin(APITestCase):
         })
         self.assertIn(log.data, expected_data)
 
+    def test_log_list_data_json(self):
+        data = [
+            {
+                'val1': 1,
+                'val2': 2
+            },
+            {
+                'val3': 3,
+                'val4': 4
+            }
+        ]
+        self.client.post('/logging', data, format='json')
+
+        log = APIRequestLog.objects.first()
+        expected_data = str([  # keys could be either way round
+            {u'val1': 1, u'val2': 2},
+            {u'val3': 3, u'val4': 4},
+        ])
+        self.assertEqual(log.data, expected_data)
+
     def test_log_data_json_cleaned(self):
         self.client.post('/logging', {'password': '123456', 'val2': [{'val': 'b'}]},
                          format='json')
