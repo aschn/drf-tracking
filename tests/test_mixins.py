@@ -285,6 +285,7 @@ class TestLoggingMixin(APITestCase):
         self.client.post('/400-body-parse-error-logging', 'INVALID JSON', content_type=content_type)
         log = APIRequestLog.objects.first()
         self.assertEqual(log.status_code, 400)
+        self.assertEqual(log.data, 'INVALID JSON')
         self.assertIn('parse error', log.response)
 
     @mock.patch('rest_framework_tracking.models.APIRequestLog.save')

@@ -42,6 +42,7 @@ class BaseLoggingMixin(object):
             remote_addr=ipaddr,
             host=request.get_host(),
             method=request.method,
+            data=request.body,
             query_params=self._clean_data(request.query_params.dict()),
         )
 
