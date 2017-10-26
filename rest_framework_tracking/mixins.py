@@ -1,3 +1,4 @@
+import ast
 from .models import APIRequestLog
 from django.utils.timezone import now
 import traceback
@@ -121,6 +122,9 @@ class BaseLoggingMixin(object):
         You can define your own sensitive fields in your view by defining a set
         eg: sensitive_fields = {'field1', 'field2'}
         """
+        if isinstance(data, list):
+            return [self._clean_data(d) for d in data]
+
         data = dict(data)
 
         SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
@@ -129,7 +133,13 @@ class BaseLoggingMixin(object):
         if self.sensitive_fields:
             SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
-        for key in data:
+        for key, value in data.items():
+            try:
+                value = ast.literal_eval(value)
+            except ValueError:
+                pass
+            if isinstance(value, list) or isinstance(value, dict):
+                data[key] = self._clean_data(value)
             if key.lower() in SENSITIVE_FIELDS:
                 data[key] = CLEANED_SUBSTITUTE
         return data

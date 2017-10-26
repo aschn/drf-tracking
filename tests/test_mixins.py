@@ -179,6 +179,15 @@ class TestLoggingMixin(APITestCase):
         })
         self.assertIn(log.data, expected_data)
 
+    def test_log_list_data_json(self):
+        self.client.post('/logging', [{'k1': 1, 'k2': 2}, {'k3': 3}], format='json')
+
+        log = APIRequestLog.objects.first()
+        expected_data = str([
+            {u'k1': 1, u'k2': 2}, {u'k3': 3},
+        ])
+        self.assertEqual(log.data, expected_data)
+
     def test_log_data_json_cleaned(self):
         self.client.post('/logging', {'password': '123456', 'val2': [{'val': 'b'}]},
                          format='json')
@@ -187,6 +196,18 @@ class TestLoggingMixin(APITestCase):
             str({u'password': '********************',
                 u'val2': [{u'val': u'b'}]}),
             str({u'val2': [{u'val': u'b'}],
+                u'password': '********************'}),
+        })
+        self.assertIn(log.data, expected_data)
+
+    def test_log_data_json_cleaned_nested(self):
+        self.client.post('/logging', {'password': '123456', 'val2': [{'api': 'b'}]},
+                         format='json')
+        log = APIRequestLog.objects.first()
+        expected_data = frozenset({  # keys could be either way round
+            str({u'password': '********************',
+                u'val2': [{u'api': '********************'}]}),
+            str({u'val2': [{u'api': '********************'}],
                 u'password': '********************'}),
         })
         self.assertIn(log.data, expected_data)
@@ -207,6 +228,15 @@ class TestLoggingMixin(APITestCase):
                          u'api': '********************',
                          u'capitalized': '12345',
                          u'my_field': '********************'})
+
+    def test_log_params_cleaned_from_personal_list_nested(self):
+        self.client.get('/sensitive-fields-logging',
+                        {'api': '1234', 'var1': {'api': '4321'}})
+        log = APIRequestLog.objects.first()
+        self.assertEqual(ast.literal_eval(log.query_params), {
+                         u'api': '********************',
+                         u'var1': {u'api': '********************'}
+                         })
 
     def test_log_text_response(self):
         self.client.get('/logging')
