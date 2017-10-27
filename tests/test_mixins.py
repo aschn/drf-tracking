@@ -180,11 +180,11 @@ class TestLoggingMixin(APITestCase):
         self.assertIn(log.data, expected_data)
 
     def test_log_list_data_json(self):
-        self.client.post('/logging', [{'k1': 1, 'k2': 2}, {'k3': 3}], format='json')
+        self.client.post('/logging', [1, 2, {'k1': 1, 'k2': 2}, {'k3': 3}], format='json')
 
         log = APIRequestLog.objects.first()
         expected_data = str([
-            {u'k1': 1, u'k2': 2}, {u'k3': 3},
+            1, 2, {u'k1': 1, u'k2': 2}, {u'k3': 3},
         ])
         self.assertEqual(log.data, expected_data)
 

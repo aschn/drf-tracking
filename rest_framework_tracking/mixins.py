@@ -125,23 +125,24 @@ class BaseLoggingMixin(object):
         if isinstance(data, list):
             return [self._clean_data(d) for d in data]
 
-        data = dict(data)
+        if isinstance(data, dict):
+            data = dict(data)
 
-        SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
-        CLEANED_SUBSTITUTE = '********************'
+            SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
+            CLEANED_SUBSTITUTE = '********************'
 
-        if self.sensitive_fields:
-            SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
+            if self.sensitive_fields:
+                SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
-        for key, value in data.items():
-            try:
-                value = ast.literal_eval(value)
-            except ValueError:
-                pass
-            if isinstance(value, list) or isinstance(value, dict):
-                data[key] = self._clean_data(value)
-            if key.lower() in SENSITIVE_FIELDS:
-                data[key] = CLEANED_SUBSTITUTE
+            for key, value in data.items():
+                try:
+                    value = ast.literal_eval(value)
+                except ValueError:
+                    pass
+                if isinstance(value, list) or isinstance(value, dict):
+                    data[key] = self._clean_data(value)
+                if key.lower() in SENSITIVE_FIELDS:
+                    data[key] = CLEANED_SUBSTITUTE
         return data
 
 
