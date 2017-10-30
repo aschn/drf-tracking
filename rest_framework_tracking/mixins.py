@@ -5,6 +5,9 @@ import traceback
 
 
 class BaseLoggingMixin(object):
+    SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
+    CLEANED_SUBSTITUTE = '********************'
+
     logging_methods = '__all__'
     sensitive_fields = {}
 
@@ -14,25 +17,24 @@ class BaseLoggingMixin(object):
         ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
         if ipaddr:
             # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
-            ipaddr = [x.strip() for x in ipaddr.split(",")][0]
+            ipaddr = ipaddr.split(",")[0].strip()
         else:
             ipaddr = request.META.get("REMOTE_ADDR", "")
 
         # get view
-        view_name = ''
+        method = request.method.lower()
         try:
-            method = request.method.lower()
             attributes = getattr(self, method)
             view_name = (type(attributes.__self__).__module__ + '.' +
                          type(attributes.__self__).__name__)
-        except Exception:
-            pass
+        except AttributeError:
+            view_name = ''
 
         # get the method of the view
         if hasattr(self, 'action'):
             view_method = self.action if self.action else ''
         else:
-            view_method = method.lower()
+            view_method = method
 
         # create log
         self.request.log = APIRequestLog(
@@ -85,12 +87,12 @@ class BaseLoggingMixin(object):
         if not hasattr(self.request, 'log'):
             return response
 
-        # compute response time
-        response_timedelta = now() - self.request.log.requested_at
-        response_ms = int(response_timedelta.total_seconds() * 1000)
-
         # save to log
         if (self._should_log(request, response)):
+            # compute response time
+            response_timedelta = now() - self.request.log.requested_at
+            response_ms = int(response_timedelta.total_seconds() * 1000)
+
             self.request.log.response = response.rendered_content
             self.request.log.status_code = response.status_code
             self.request.log.response_ms = response_ms
@@ -128,11 +130,8 @@ class BaseLoggingMixin(object):
         if isinstance(data, dict):
             data = dict(data)
 
-            SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
-            CLEANED_SUBSTITUTE = '********************'
-
             if self.sensitive_fields:
-                SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
+                self.SENSITIVE_FIELDS = self.SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
             for key, value in data.items():
                 try:
@@ -141,8 +140,8 @@ class BaseLoggingMixin(object):
                     pass
                 if isinstance(value, list) or isinstance(value, dict):
                     data[key] = self._clean_data(value)
-                if key.lower() in SENSITIVE_FIELDS:
-                    data[key] = CLEANED_SUBSTITUTE
+                if key.lower() in self.SENSITIVE_FIELDS:
+                    data[key] = self.CLEANED_SUBSTITUTE
         return data
 
 

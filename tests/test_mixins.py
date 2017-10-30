@@ -9,6 +9,7 @@ from flaky import flaky
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIRequestFactory, APITestCase
+from rest_framework_tracking.mixins import BaseLoggingMixin
 from rest_framework_tracking.models import APIRequestLog
 
 try:
@@ -160,9 +161,9 @@ class TestLoggingMixin(APITestCase):
         self.client.get('/logging', {'password': '1234', 'key': '12345', 'secret': '123456'})
         log = APIRequestLog.objects.first()
         self.assertEqual(ast.literal_eval(log.query_params), {
-                         u'password': '********************',
-                         u'key': '********************',
-                         u'secret': '********************'})
+                         u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+                         u'key': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+                         u'secret': BaseLoggingMixin.CLEANED_SUBSTITUTE})
 
     def test_log_data_empty(self):
         """Default payload is string {}"""
@@ -193,10 +194,10 @@ class TestLoggingMixin(APITestCase):
                          format='json')
         log = APIRequestLog.objects.first()
         expected_data = frozenset({  # keys could be either way round
-            str({u'password': '********************',
+            str({u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
                 u'val2': [{u'val': u'b'}]}),
             str({u'val2': [{u'val': u'b'}],
-                u'password': '********************'}),
+                u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
         })
         self.assertIn(log.data, expected_data)
 
@@ -205,10 +206,10 @@ class TestLoggingMixin(APITestCase):
                          format='json')
         log = APIRequestLog.objects.first()
         expected_data = frozenset({  # keys could be either way round
-            str({u'password': '********************',
-                u'val2': [{u'api': '********************'}]}),
-            str({u'val2': [{u'api': '********************'}],
-                u'password': '********************'}),
+            str({u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+                u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}]}),
+            str({u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}],
+                u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
         })
         self.assertIn(log.data, expected_data)
 
@@ -216,7 +217,7 @@ class TestLoggingMixin(APITestCase):
         self.client.get('/logging', {'api': '1234', 'capitalized': '12345', 'keyword': '123456'})
         log = APIRequestLog.objects.first()
         self.assertEqual(ast.literal_eval(log.query_params), {
-                         u'api': '********************',
+                         u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
                          u'capitalized': '12345',
                          u'keyword': '123456'})
 
@@ -225,17 +226,17 @@ class TestLoggingMixin(APITestCase):
                         {'api': '1234', 'capitalized': '12345', 'my_field': '123456'})
         log = APIRequestLog.objects.first()
         self.assertEqual(ast.literal_eval(log.query_params), {
-                         u'api': '********************',
+                         u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
                          u'capitalized': '12345',
-                         u'my_field': '********************'})
+                         u'my_field': BaseLoggingMixin.CLEANED_SUBSTITUTE})
 
     def test_log_params_cleaned_from_personal_list_nested(self):
         self.client.get('/sensitive-fields-logging',
                         {'api': '1234', 'var1': {'api': '4321'}})
         log = APIRequestLog.objects.first()
         self.assertEqual(ast.literal_eval(log.query_params), {
-                         u'api': '********************',
-                         u'var1': {u'api': '********************'}
+                         u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+                         u'var1': {u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}
                          })
 
     def test_log_text_response(self):
