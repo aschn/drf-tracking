@@ -5,6 +5,9 @@ import traceback
 
 
 class BaseLoggingMixin(object):
+    SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
+    CLEANED_SUBSTITUTE = '********************'
+
     logging_methods = '__all__'
     sensitive_fields = {}
 
@@ -127,11 +130,8 @@ class BaseLoggingMixin(object):
         if isinstance(data, dict):
             data = dict(data)
 
-            SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
-            CLEANED_SUBSTITUTE = '********************'
-
             if self.sensitive_fields:
-                SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
+                self.SENSITIVE_FIELDS = self.SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
             for key, value in data.items():
                 try:
@@ -140,8 +140,8 @@ class BaseLoggingMixin(object):
                     pass
                 if isinstance(value, list) or isinstance(value, dict):
                     data[key] = self._clean_data(value)
-                if key.lower() in SENSITIVE_FIELDS:
-                    data[key] = CLEANED_SUBSTITUTE
+                if key.lower() in self.SENSITIVE_FIELDS:
+                    data[key] = self.CLEANED_SUBSTITUTE
         return data
 
 
