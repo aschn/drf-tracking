@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^slow-logging$', test_views.MockSlowLoggingView.as_view()),
     url(r'^explicit-logging$', test_views.MockExplicitLoggingView.as_view()),
     url(r'^sensitive-fields-logging$', test_views.MockSensitiveFieldsLoggingView.as_view()),
+    url(r'^invalid-cleaned-substitute-logging$', test_views.MockInvalidCleanedSubstituteLoggingView.as_view()),
     url(r'^custom-check-logging$', test_views.MockCustomCheckLoggingView.as_view()),
     url(r'^errors-logging$', test_views.MockLoggingErrorsView.as_view()),
     url(r'^session-auth-logging$', test_views.MockSessionAuthLoggingView.as_view()),
