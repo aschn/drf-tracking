@@ -44,6 +44,10 @@ class MockSensitiveFieldsLoggingView(LoggingMixin, APIView):
         return Response('with logging')
 
 
+class MockInvalidCleanedSubstituteLoggingView(LoggingMixin, APIView):
+    CLEANED_SUBSTITUTE = 1
+
+
 class MockCustomCheckLoggingView(LoggingMixin, APIView):
     def _should_log(self, request, response):
         """

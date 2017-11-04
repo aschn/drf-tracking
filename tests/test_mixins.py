@@ -239,6 +239,10 @@ class TestLoggingMixin(APITestCase):
                          u'var1': {u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}
                          })
 
+    def test_invalid_cleaned_substitute_fails(self):
+        with self.assertRaises(AssertionError):
+            self.client.get('/invalid-cleaned-substitute-logging')
+
     def test_log_text_response(self):
         self.client.get('/logging')
         log = APIRequestLog.objects.first()
