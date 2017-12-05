@@ -142,6 +142,8 @@ class BaseLoggingMixin(object):
                     value = ast.literal_eval(value)
                 except ValueError:
                     pass
+                except SyntaxError:
+                    pass
                 if isinstance(value, list) or isinstance(value, dict):
                     data[key] = self._clean_data(value)
                 if key.lower() in SENSITIVE_FIELDS:
