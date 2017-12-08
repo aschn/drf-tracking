@@ -87,18 +87,14 @@ class BaseLoggingMixin(object):
         response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
         # check if request is being logged
-        if not hasattr(self.request, 'log'):
-            return response
-
-        # save to log
-        if (self._should_log(request, response)):
+        if hasattr(self.request, 'log') and self._should_log(request, response):
             # compute response time
             response_timedelta = now() - self.request.log.requested_at
             response_ms = int(response_timedelta.total_seconds() * 1000)
 
             self.request.log.response = response.rendered_content
             self.request.log.status_code = response.status_code
-            self.request.log.response_ms = response_ms
+            self.request.log.response_ms = max(response_ms, 0)
             try:
                 self.request.log.save()
             except Exception:

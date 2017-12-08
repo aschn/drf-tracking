@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import pytest
 import ast
+import datetime
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 from flaky import flaky
@@ -329,3 +330,13 @@ class TestLoggingMixin(APITestCase):
         response = self.client.get('/logging')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(APIRequestLog.objects.all().count(), 0)
+
+    @mock.patch('rest_framework_tracking.mixins.now')
+    def test_log_doesnt_fail_with_negative_response_ms(self, mock_now):
+        mock_now.side_effect = [
+            datetime.datetime(2017, 12, 1, 10, 0, 10),
+            datetime.datetime(2017, 12, 1, 10)
+        ]
+        self.client.get('/logging')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.response_ms, 0)
