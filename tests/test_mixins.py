@@ -214,6 +214,18 @@ class TestLoggingMixin(APITestCase):
         })
         self.assertIn(log.data, expected_data)
 
+    def test_log_data_json_cleaned_nested_syntax_error(self):
+        self.client.post('/logging', {'password': '@', 'val2': [{'api': 'b'}]},
+                         format='json')
+        log = APIRequestLog.objects.first()
+        expected_data = frozenset({  # keys could be either way round
+            str({u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+                u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}]}),
+            str({u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}],
+                u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
+        })
+        self.assertIn(log.data, expected_data)
+
     def test_log_exact_match_params_cleaned(self):
         self.client.get('/logging', {'api': '1234', 'capitalized': '12345', 'keyword': '123456'})
         log = APIRequestLog.objects.first()
