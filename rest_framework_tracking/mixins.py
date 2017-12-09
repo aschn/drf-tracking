@@ -16,50 +16,12 @@ class BaseLoggingMixin(object):
 
     """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
-        # get IP
-        ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
-        if ipaddr:
-            # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
-            ipaddr = ipaddr.split(",")[0].strip()
-        else:
-            ipaddr = request.META.get("REMOTE_ADDR", "")
-
-        # get view
-        method = request.method.lower()
-        try:
-            attributes = getattr(self, method)
-            view_name = (type(attributes.__self__).__module__ + '.' +
-                         type(attributes.__self__).__name__)
-        except AttributeError:
-            view_name = ''
-
-        # get the method of the view
-        if hasattr(self, 'action'):
-            view_method = self.action if self.action else ''
-        else:
-            view_method = method
-
-        # create log
-        self.request.log = APIRequestLog(
-            requested_at=now(),
-            path=request.path,
-            view=view_name,
-            view_method=view_method,
-            remote_addr=ipaddr,
-            host=request.get_host(),
-            method=request.method,
-            data=request.body,
-            query_params=self._clean_data(request.query_params.dict()),
-        )
+        self.log = {}
+        self.log['requested_at'] = now()
+        self.log['data'] = request.body
 
         # regular initial, including auth check
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
-
-        # add user to log after auth
-        user = request.user
-        if user.is_anonymous():
-            user = None
-        self.request.log.user = user
 
         # get data dict
         try:
@@ -67,17 +29,17 @@ class BaseLoggingMixin(object):
             # ParseError and UnsupportedMediaType exceptions. It's important not to swallow these,
             # as (depending on implementation details) they may only get raised this once, and
             # DRF logic needs them to be raised by the view for error handling to work correctly.
-            self.request.log.data = self._clean_data(self.request.data.dict())
+            data = self.request.data.dict()
         except AttributeError:  # if already a dict, can't dictify
-            self.request.log.data = self._clean_data(self.request.data)
+            data = self.request.data
+        self.log['data'] = data
 
     def handle_exception(self, exc):
         # basic handling
         response = super(BaseLoggingMixin, self).handle_exception(exc)
 
         # log error
-        if hasattr(self.request, 'log'):
-            self.request.log.errors = traceback.format_exc()
+        self.log['errors'] = traceback.format_exc()
 
         # return
         return response
@@ -86,23 +48,82 @@ class BaseLoggingMixin(object):
         # regular finalize response
         response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
-        # check if request is being logged
-        if hasattr(self.request, 'log') and self._should_log(request, response):
-            # compute response time
-            response_timedelta = now() - self.request.log.requested_at
-            response_ms = int(response_timedelta.total_seconds() * 1000)
+        # Ensure backward compatibility for those using _should_log hook
+        _should_log = self.should_log if hasattr(self, 'should_log') else self._should_log
 
-            self.request.log.response = response.rendered_content
-            self.request.log.status_code = response.status_code
-            self.request.log.response_ms = max(response_ms, 0)
+        # check if request is being logged
+        if _should_log(request, response):
+
+            self.log.update(
+                {
+                    'remote_addr': self._get_ip_address(request),
+                    'view': self._get_view_name(request),
+                    'view_method': self._get_view_method(request),
+                    'path': request.path,
+                    'host': request.get_host(),
+                    'method': request.method,
+                    'query_params': self._clean_data(request.query_params.dict()),
+                    'user': self._get_user(request),
+                    'response_ms': self._get_response_ms(),
+                    'response': response.rendered_content,
+                    'status_code': response.status_code,
+                    'data': self._clean_data(self.log['data'])
+                }
+            )
             try:
-                self.request.log.save()
+                self.pre_save_log()
+                self._save_log()
+                self.post_save_log()
             except Exception:
                 # ensure that a DB error doesn't prevent API call to continue as expected
                 pass
 
         # return
         return response
+
+    def pre_save_log(self):
+        """Pre-save hook to modify data before saving them in the database"""
+        pass
+
+    def _save_log(self):
+        APIRequestLog(**self.log).save()
+
+    def post_save_log(self):
+        """Post-save hook to make additional actions (centralized logging eg. ELK or Sentry)."""
+        pass
+
+    def _get_ip_address(self, request):
+        ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
+        if ipaddr:
+            # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
+            return ipaddr.split(",")[0].strip()
+        return request.META.get("REMOTE_ADDR", "")
+
+    def _get_view_name(self, request):
+        method = request.method.lower()
+        try:
+            attributes = getattr(self, method)
+            view_name = (type(attributes.__self__).__module__ + '.' +
+                         type(attributes.__self__).__name__)
+        except AttributeError:
+            view_name = ''
+        return view_name
+
+    def _get_view_method(self, request):
+        if hasattr(self, 'action'):
+            return self.action if self.action else ''
+        return request.method.lower()
+
+    def _get_user(self, request):
+        user = request.user
+        if user.is_anonymous():
+            return None
+        return user
+
+    def _get_response_ms(self):
+        response_timedelta = now() - self.log['requested_at']
+        response_ms = int(response_timedelta.total_seconds() * 1000)
+        return max(response_ms, 0)
 
     def _should_log(self, request, response):
         """
@@ -136,9 +157,7 @@ class BaseLoggingMixin(object):
             for key, value in data.items():
                 try:
                     value = ast.literal_eval(value)
-                except ValueError:
-                    pass
-                except SyntaxError:
+                except (ValueError, SyntaxError):
                     pass
                 if isinstance(value, list) or isinstance(value, dict):
                     data[key] = self._clean_data(value)
