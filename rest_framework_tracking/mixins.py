@@ -5,6 +5,8 @@ import traceback
 
 
 class BaseLoggingMixin(object):
+    """Mixin to log requests"""
+
     CLEANED_SUBSTITUTE = '********************'
 
     logging_methods = '__all__'
@@ -14,10 +16,10 @@ class BaseLoggingMixin(object):
         assert isinstance(self.CLEANED_SUBSTITUTE, str), 'CLEANED_SUBSTITUTE must be a string.'
         super(BaseLoggingMixin, self).__init__(*args, **kwargs)
 
-    """Mixin to log requests"""
     def initial(self, request, *args, **kwargs):
         self.log = {}
         self.log['requested_at'] = now()
+        # hold request.body in case super call to initial raise an exception
         self.log['data'] = request.body
 
         # regular initial, including auth check
@@ -49,10 +51,10 @@ class BaseLoggingMixin(object):
         response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
         # Ensure backward compatibility for those using _should_log hook
-        _should_log = self.should_log if hasattr(self, 'should_log') else self._should_log
+        should_log = self._should_log if hasattr(self, '_should_log') else self.should_log
 
         # check if request is being logged
-        if _should_log(request, response):
+        if should_log(request, response):
 
             self.log.update(
                 {
@@ -71,28 +73,23 @@ class BaseLoggingMixin(object):
                 }
             )
             try:
-                self.pre_save_log()
-                self._save_log()
-                self.post_save_log()
+                self.handle_log()
             except Exception:
-                # ensure that a DB error doesn't prevent API call to continue as expected
+                # ensure that all exceptions raised by handle_log
+                # doesn't prevent API call to continue as expected
                 pass
 
-        # return
         return response
 
-    def pre_save_log(self):
-        """Pre-save hook to modify data before saving them in the database"""
-        pass
+    def handle_log(self):
+        """Hook to define what happens with the log.
 
-    def _save_log(self):
+        Defaults on saving the data on the db.
+        """
         APIRequestLog(**self.log).save()
 
-    def post_save_log(self):
-        """Post-save hook to make additional actions (centralized logging eg. ELK or Sentry)."""
-        pass
-
     def _get_ip_address(self, request):
+        """Get the remote ip address the request was generated from. """
         ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
         if ipaddr:
             # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
@@ -100,6 +97,7 @@ class BaseLoggingMixin(object):
         return request.META.get("REMOTE_ADDR", "")
 
     def _get_view_name(self, request):
+        """Get view name."""
         method = request.method.lower()
         try:
             attributes = getattr(self, method)
@@ -110,24 +108,30 @@ class BaseLoggingMixin(object):
         return view_name
 
     def _get_view_method(self, request):
+        """Get view method."""
         if hasattr(self, 'action'):
             return self.action if self.action else ''
         return request.method.lower()
 
     def _get_user(self, request):
+        """Get user."""
         user = request.user
         if user.is_anonymous():
             return None
         return user
 
     def _get_response_ms(self):
+        """Get the duration of the request response cycle is milliseconds.
+
+        In case of negative duration 0 is returned.
+        """
         response_timedelta = now() - self.log['requested_at']
         response_ms = int(response_timedelta.total_seconds() * 1000)
         return max(response_ms, 0)
 
-    def _should_log(self, request, response):
+    def should_log(self, request, response):
         """
-        Method that should return True if this request should be logged.
+        Method that should return a value that evaluated to True if the request should be logged.
         By default, check if the request method is in logging_methods.
         """
         return self.logging_methods == '__all__' or request.method in self.logging_methods
@@ -174,5 +178,5 @@ class LoggingErrorsMixin(BaseLoggingMixin):
     """
     Log only errors
     """
-    def _should_log(self, request, response):
+    def should_log(self, request, response):
         return response.status_code >= 400

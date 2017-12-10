@@ -48,7 +48,7 @@ class MockInvalidCleanedSubstituteLoggingView(LoggingMixin, APIView):
     CLEANED_SUBSTITUTE = 1
 
 
-class MockCustomCheckLoggingView(LoggingMixin, APIView):
+class MockCustomCheckLoggingViewDeprecated(LoggingMixin, APIView):
     def _should_log(self, request, response):
         """
         Log only if response contains 'log'
@@ -60,6 +60,60 @@ class MockCustomCheckLoggingView(LoggingMixin, APIView):
 
     def post(self, request):
         return Response('no recording')
+
+
+class MockCustomCheckLoggingView(LoggingMixin, APIView):
+    def should_log(self, request, response):
+        """
+        Log only if response contains 'log'
+        """
+        return 'log' in response.data
+
+    def get(self, request):
+        return Response('with logging')
+
+    def post(self, request):
+        return Response('no recording')
+
+
+class MockCustomCheckLoggingWithLoggingMethodsView(LoggingMixin, APIView):
+
+    logging_methods = ['POST']
+
+    def should_log(self, request, response):
+        """
+        Log only if request is in the logging methods and response contains 'log'.
+        """
+        should_log_method = super(MockCustomCheckLoggingWithLoggingMethodsView, self).should_log(request, response)
+        if not should_log_method:
+            return False
+        return 'log' in response.data
+
+    def get(self, request):
+        return Response('with logging')
+
+    def post(self, request):
+        return Response('no recording')
+
+
+class MockCustomCheckLoggingWithLoggingMethodsFailView(LoggingMixin, APIView):
+    """The expected behavior should be to save only the post request.
+    Though, due to the improper `should_log` implementation both requests are saved.
+    """
+
+    logging_methods = ['POST']
+
+    def should_log(self, request, response):
+        """
+        Log only if response contains 'log'
+        """
+        return 'log' in response.data
+
+    def get(self, request):
+        return Response('with logging')
+
+    def post(self, request):
+        return Response('with logging')
 
 
 class MockLoggingErrorsView(LoggingErrorsMixin, APIView):
@@ -134,3 +188,19 @@ class Mock400BodyParseErrorLoggingView(LoggingMixin, APIView):
         # (though only if it's the first access to request.data)
         request.data
         return Response('Data processed')
+
+
+class MockCustomLogHandlerView(LoggingMixin, APIView):
+    def handle_log(self):
+        """
+        Save only very slow requests. Requests that took more than 500 ms.
+        """
+        if self.log['response_ms'] > 500:
+            super(MockCustomLogHandlerView, self).handle_log()
+
+    def get(self, request):
+        return Response('Fast request. No logging.')
+
+    def post(self, request):
+        time.sleep(1)
+        return Response('Slow request. Save it on db.')

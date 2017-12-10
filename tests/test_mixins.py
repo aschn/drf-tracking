@@ -104,6 +104,23 @@ class TestLoggingMixin(APITestCase):
         self.client.post('/custom-check-logging')
         self.assertEqual(APIRequestLog.objects.all().count(), 1)
 
+    def test_custom_check_logging_deprecated(self):
+        self.client.get('/custom-check-logging-deprecated')
+        self.client.post('/custom-check-logging-deprecated')
+        self.assertEqual(APIRequestLog.objects.all().count(), 1)
+
+    def test_custom_check_logging_with_logging_methods_fail(self):
+        """Custom `should_log` does not respect logging_methods."""
+        self.client.get('/custom-check-logging-methods-fail')
+        self.client.post('/custom-check-logging-methods-fail')
+        self.assertEqual(APIRequestLog.objects.all().count(), 2)
+
+    def test_custom_check_logging_with_logging_methods(self):
+        """Custom `should_log` respect logging_methods."""
+        self.client.get('/custom-check-logging-methods')
+        self.client.post('/custom-check-logging-methods')
+        self.assertEqual(APIRequestLog.objects.all().count(), 0)
+
     def test_errors_logging(self):
         self.client.get('/errors-logging')
         self.client.post('/errors-logging')
@@ -352,3 +369,8 @@ class TestLoggingMixin(APITestCase):
         self.client.get('/logging')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response_ms, 0)
+
+    def test_custom_log_handler(self):
+            self.client.get('/custom-log-handler')
+            self.client.post('/custom-log-handler')
+            self.assertEqual(APIRequestLog.objects.all().count(), 1)
