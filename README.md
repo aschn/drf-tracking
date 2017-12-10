@@ -70,6 +70,68 @@ class LoggingView(LoggingMixin, generics.CreateModelMixin, generics.GenericAPIVi
     model = ...
 ```
 
+Moreover, you could define your own rules by overriding `should_log` method.
+If `should_log` evaluates to True a log is created.
+```python
+class LoggingView(LoggingMixin, generics.GenericAPIView):
+    def should_log(self, request, response):
+        """Log only errors"""
+        return response.status_code >= 400
+```
+
+At the example above, `logging_methods` attribute will be ignored. If you want to provide some extra rules
+on top of the http method filtering you should rewrite the `should_log` method.
+```python
+class LoggingView(LoggingMixin, generics.GenericAPIView):
+    def should_log(self, request, response):
+        """Log only errors with respect on `logging_methods` attributes"""
+        should_log_method = super(LoggingView, self).should_log(request, response)
+        if not should_log_method:
+            return False
+        return response.status_code >= 400
+```
+
+ A bit simpler.
+ ```python
+class LoggingView(LoggingMixin, generics.GenericAPIView):
+    def should_log(self, request, response):
+        """Log only errors with respect on `logging_methods` attributes"""
+        if not request.method in self.logging_methods:
+            return False
+        return response.status_code >= 400
+```
+
+Finally, you can also apply your customizations by overriding `handle_log` method.
+By default, all requests that satisfy `should_log` method are saved on the database.
+```python
+class LoggingView(LoggingMixin, generics.GenericAPIView):
+    def handle_log(self):
+        # Do some stuff before saving.
+        super(MockCustomLogHandlerView, self).handle_log()
+        # Do some stuff after saving.
+```
+
+
+Though, you could define your own handling. For example save on an in-memory data structure store, remote logging system etc.
+```python
+class LoggingView(LoggingMixin, generics.GenericAPIView):
+
+    def handle_log(self):
+        cache.set('my_key', self.log, 86400)
+```
+
+Or you could omit save a request to the database. For example,
+```python
+class LoggingView(LoggingMixin, generics.GenericAPIView):
+    def handle_log(self):
+        """
+        Save only very slow requests. Requests that took more than a second.
+        """
+        if self.log['response_ms'] > 1000:
+            super(MockCustomLogHandlerView, self).handle_log()
+```
+
+
 ## Security
 
 By default drf-tracking is hiding the values of those fields `{'api', 'token', 'key', 'secret', 'password', 'signature'}`.
