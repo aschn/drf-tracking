@@ -89,10 +89,12 @@ class BaseLoggingMixin(object):
         in elastic search or, by default, in the database configured for the django project
         """
         if self.elasticsearch_enabled:
+            if self.log['user']:
+                self.log['user'] = self.log['user'].id
             elastic = ElasticClient()
-            elastic.add_api_log(self.data)
+            elastic.add_api_log(self.log)
         else:
-            APIRequestLog(**self.data).save()
+            APIRequestLog(**self.log).save()
 
     def _get_ip_address(self, request):
         """Get the remote ip address the request was generated from. """
