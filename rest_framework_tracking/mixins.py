@@ -19,41 +19,32 @@ class BaseLoggingMixin(object):
     def initial(self, request, *args, **kwargs):
         self.log = {}
         self.log['requested_at'] = now()
-        # hold request.body in case super call to initial raise an exception
         self.log['data'] = request.body
 
-        # regular initial, including auth check
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
 
-        # get data dict
         try:
             # Accessing request.data *for the first time* parses the request body, which may raise
             # ParseError and UnsupportedMediaType exceptions. It's important not to swallow these,
             # as (depending on implementation details) they may only get raised this once, and
             # DRF logic needs them to be raised by the view for error handling to work correctly.
             data = self.request.data.dict()
-        except AttributeError:  # if already a dict, can't dictify
+        except AttributeError:
             data = self.request.data
         self.log['data'] = data
 
     def handle_exception(self, exc):
-        # basic handling
         response = super(BaseLoggingMixin, self).handle_exception(exc)
-
-        # log error
         self.log['errors'] = traceback.format_exc()
 
-        # return
         return response
 
     def finalize_response(self, request, response, *args, **kwargs):
-        # regular finalize response
         response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
 
         # Ensure backward compatibility for those using _should_log hook
         should_log = self._should_log if hasattr(self, '_should_log') else self.should_log
 
-        # check if request is being logged
         if should_log(request, response):
 
             self.log.update(
@@ -82,7 +73,8 @@ class BaseLoggingMixin(object):
         return response
 
     def handle_log(self):
-        """Hook to define what happens with the log.
+        """
+        Hook to define what happens with the log.
 
         Defaults on saving the data on the db.
         """
@@ -121,8 +113,8 @@ class BaseLoggingMixin(object):
         return user
 
     def _get_response_ms(self):
-        """Get the duration of the request response cycle is milliseconds.
-
+        """
+        Get the duration of the request response cycle is milliseconds.
         In case of negative duration 0 is returned.
         """
         response_timedelta = now() - self.log['requested_at']
