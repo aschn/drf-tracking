@@ -6,6 +6,7 @@ import ast
 import datetime
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+from django.test.utils import override_settings
 from flaky import flaky
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -23,9 +24,8 @@ from .views import MockLoggingView
 pytestmark = pytest.mark.django_db
 
 
+@override_settings(ROOT_URLCONF='tests.urls')
 class TestLoggingMixin(APITestCase):
-
-    urls = 'tests.urls'
 
     def test_nologging_no_log_created(self):
         self.client.get('/no-logging')
