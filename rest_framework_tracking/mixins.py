@@ -29,17 +29,18 @@ class BaseLoggingMixin(object):
     def initial(self, request, *args, **kwargs):
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
 
-        try:
-            # Accessing request.data *for the first time* parses the request body, which may raise
-            # ParseError and UnsupportedMediaType exceptions. It's important not to swallow these,
-            # as (depending on implementation details) they may only get raised this once, and
-            # DRF logic needs them to be raised by the view for error handling to work correctly.
-            data = self.request.data.dict()
-        except AttributeError:
-            data = self.request.data
-
-        self.log['data'] = data
         self.log['requested_at'] = now()
+        if getattr(settings, 'DRF_TRACKING_LOG_REQUEST_DATA', True):
+            self.log['data'] = request.body
+            try:
+                # Accessing request.data *for the first time* parses the request body, which may
+                # raise ParseError and UnsupportedMediaType exceptions. It's important not to
+                # swallow these, as (depending on implementation details) they may only get raised
+                # this once, and DRF logic needs them to be raised by the view for error handling
+                # to work correctly.
+                self.log['data'] = self.request.data.dict()
+            except AttributeError:
+                self.log['data'] = self.request.data
 
     def handle_exception(self, exc):
         response = super(BaseLoggingMixin, self).handle_exception(exc)
@@ -69,16 +70,16 @@ class BaseLoggingMixin(object):
                     'response_ms': self._get_response_ms(),
                     'response': response.rendered_content,
                     'status_code': response.status_code,
-                    'data': self._clean_data(self.log['data'])
+                    'data': self._clean_data(self.log.get('data'))
                 }
             )
             try:
                 self.handle_log()
             except Exception as e:
-                # ensure that all exceptions raised by handle_log
-                # doesn't prevent API call to continue as expected
-                logger.exception(e)
-
+                # ensure that all exceptions raised by handle_log doesn't prevent API call to
+                # continue as expected
+                if getattr(settings, 'DRF_TRACKING_DEBUG', False):
+                    logger.exception(e)
         return response
 
     def handle_log(self):

@@ -157,6 +157,14 @@ every config that you put in `DRF_TRACKING_ELASTIC_CONFIG` will be directly put 
 
 More informations here [https://elasticsearch-py.readthedocs.io/en/master/connection.html#urllib3httpconnection-default-connection-class](https://elasticsearch-py.readthedocs.io/en/master/connection.html#urllib3httpconnection-default-connection-class)
 
+## Available configuration
+
+```python
+DRF_TRACKING_DEBUG = True / False (default)
+DRF_TRACKING_LOG_REQUEST_DATA = True (default) / False
+```
+The `DRF_TRACKING_DEBUG` enable the logging of exceptions, we recommends to put it in `False` for production.
+
 ## Security
 
 By default drf-tracking is hiding the values of those fields `{'api', 'token', 'key', 'secret', 'password', 'signature'}`.
