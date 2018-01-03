@@ -1,7 +1,14 @@
 import ast
-from .models import APIRequestLog
-from django.utils.timezone import now
+import logging
 import traceback
+
+from django.conf import settings
+from django.utils.timezone import now
+
+from rest_framework_tracking.elastic_client import ElasticClient
+from rest_framework_tracking.models import APIRequestLog
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoggingMixin(object):
@@ -11,27 +18,29 @@ class BaseLoggingMixin(object):
 
     logging_methods = '__all__'
     sensitive_fields = {}
+    log = {}
+    # Elastic search config
+    elasticsearch_enabled = hasattr(settings, 'DRF_TRACKING_ELASTIC_CONFIG')
 
     def __init__(self, *args, **kwargs):
         assert isinstance(self.CLEANED_SUBSTITUTE, str), 'CLEANED_SUBSTITUTE must be a string.'
         super(BaseLoggingMixin, self).__init__(*args, **kwargs)
 
     def initial(self, request, *args, **kwargs):
-        self.log = {}
-        self.log['requested_at'] = now()
-        self.log['data'] = request.body
-
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
 
-        try:
-            # Accessing request.data *for the first time* parses the request body, which may raise
-            # ParseError and UnsupportedMediaType exceptions. It's important not to swallow these,
-            # as (depending on implementation details) they may only get raised this once, and
-            # DRF logic needs them to be raised by the view for error handling to work correctly.
-            data = self.request.data.dict()
-        except AttributeError:
-            data = self.request.data
-        self.log['data'] = data
+        self.log['requested_at'] = now()
+        if getattr(settings, 'DRF_TRACKING_LOG_REQUEST_DATA', True):
+            self.log['data'] = request.body
+            try:
+                # Accessing request.data *for the first time* parses the request body, which may
+                # raise ParseError and UnsupportedMediaType exceptions. It's important not to
+                # swallow these, as (depending on implementation details) they may only get raised
+                # this once, and DRF logic needs them to be raised by the view for error handling
+                # to work correctly.
+                self.log['data'] = self.request.data.dict()
+            except AttributeError:
+                self.log['data'] = self.request.data
 
     def handle_exception(self, exc):
         response = super(BaseLoggingMixin, self).handle_exception(exc)
@@ -40,7 +49,8 @@ class BaseLoggingMixin(object):
         return response
 
     def finalize_response(self, request, response, *args, **kwargs):
-        response = super(BaseLoggingMixin, self).finalize_response(request, response, *args, **kwargs)
+        response = super(BaseLoggingMixin, self).finalize_response(request, response, *args,
+                                                                   **kwargs)
 
         # Ensure backward compatibility for those using _should_log hook
         should_log = self._should_log if hasattr(self, '_should_log') else self.should_log
@@ -60,25 +70,32 @@ class BaseLoggingMixin(object):
                     'response_ms': self._get_response_ms(),
                     'response': response.rendered_content,
                     'status_code': response.status_code,
-                    'data': self._clean_data(self.log['data'])
+                    'data': self._clean_data(self.log.get('data'))
                 }
             )
             try:
                 self.handle_log()
-            except Exception:
-                # ensure that all exceptions raised by handle_log
-                # doesn't prevent API call to continue as expected
-                pass
-
+            except Exception as e:
+                # ensure that all exceptions raised by handle_log doesn't prevent API call to
+                # continue as expected
+                if getattr(settings, 'DRF_TRACKING_DEBUG', False):
+                    logger.exception(e)
         return response
 
     def handle_log(self):
         """
         Hook to define what happens with the log.
 
-        Defaults on saving the data on the db.
+        Check if options for elasticsearch are configured and save data either
+        in elastic search or, by default, in the database configured for the django project
         """
-        APIRequestLog(**self.log).save()
+        if self.elasticsearch_enabled:
+            if self.log['user']:
+                self.log['user'] = self.log['user'].id
+            elastic = ElasticClient()
+            elastic.add_api_log(self.log)
+        else:
+            APIRequestLog(**self.log).save()
 
     def _get_ip_address(self, request):
         """Get the remote ip address the request was generated from. """
@@ -121,7 +138,7 @@ class BaseLoggingMixin(object):
         response_ms = int(response_timedelta.total_seconds() * 1000)
         return max(response_ms, 0)
 
-    def should_log(self, request, response):
+    def should_log(self, request, _):
         """
         Method that should return a value that evaluated to True if the request should be logged.
         By default, check if the request method is in logging_methods.
@@ -147,8 +164,7 @@ class BaseLoggingMixin(object):
             SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
 
             data = dict(data)
-            if self.sensitive_fields:
-                SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
+            SENSITIVE_FIELDS = SENSITIVE_FIELDS | {field.lower() for field in self.sensitive_fields}
 
             for key, value in data.items():
                 try:

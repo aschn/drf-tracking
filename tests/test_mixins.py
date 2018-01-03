@@ -243,6 +243,12 @@ class TestLoggingMixin(APITestCase):
         })
         self.assertIn(log.data, expected_data)
 
+    def test_do_not_log_data_from_settings(self):
+        with self.settings(DRF_TRACKING_LOG_REQUEST_DATA=False):
+            self.client.post('/logging', {'foo': 'bar'}, format='json')
+            log = APIRequestLog.objects.first()
+            self.assertEqual(log.data, str({}))
+
     def test_log_exact_match_params_cleaned(self):
         self.client.get('/logging', {'api': '1234', 'capitalized': '12345', 'keyword': '123456'})
         log = APIRequestLog.objects.first()
@@ -371,6 +377,6 @@ class TestLoggingMixin(APITestCase):
         self.assertEqual(log.response_ms, 0)
 
     def test_custom_log_handler(self):
-            self.client.get('/custom-log-handler')
-            self.client.post('/custom-log-handler')
-            self.assertEqual(APIRequestLog.objects.all().count(), 1)
+        self.client.get('/custom-log-handler')
+        self.client.post('/custom-log-handler')
+        self.assertEqual(APIRequestLog.objects.all().count(), 1)
