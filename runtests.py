@@ -87,5 +87,7 @@ if __name__ == "__main__":
 
     if run_tests:
         exit_on_failure(pytest.main(pytest_args))
+        # ipdb support: comment the previous line and uncomment the nextone.
+        # pytest.main(pytest_args + ['-s'])
     if run_flake8:
         exit_on_failure(flake8_main(FLAKE8_ARGS))

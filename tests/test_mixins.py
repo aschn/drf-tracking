@@ -262,7 +262,8 @@ class TestLoggingMixin(APITestCase):
 
     def test_log_params_cleaned_from_personal_list_nested(self):
         self.client.get('/sensitive-fields-logging',
-                        {'api': '1234', 'var1': {'api': '4321'}})
+                        {'api': '1234', 'var1': '{"api": "4321"}'},
+                        content_type='application/json')
         log = APIRequestLog.objects.first()
         self.assertEqual(ast.literal_eval(log.query_params), {
                          u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,

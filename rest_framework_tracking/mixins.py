@@ -46,7 +46,6 @@ class BaseLoggingMixin(object):
         should_log = self._should_log if hasattr(self, '_should_log') else self.should_log
 
         if should_log(request, response):
-
             self.log.update(
                 {
                     'remote_addr': self._get_ip_address(request),
@@ -58,7 +57,7 @@ class BaseLoggingMixin(object):
                     'query_params': self._clean_data(request.query_params.dict()),
                     'user': self._get_user(request),
                     'response_ms': self._get_response_ms(),
-                    'response': response.rendered_content,
+                    'response': response.rendered_content.decode(),
                     'status_code': response.status_code,
                     'data': self._clean_data(self.log['data'])
                 }
@@ -108,7 +107,7 @@ class BaseLoggingMixin(object):
     def _get_user(self, request):
         """Get user."""
         user = request.user
-        if user.is_anonymous():
+        if user.is_anonymous:
             return None
         return user
 
@@ -140,6 +139,9 @@ class BaseLoggingMixin(object):
         You can define your own sensitive fields in your view by defining a set
         eg: sensitive_fields = {'field1', 'field2'}
         """
+        if isinstance(data, bytes):
+            data = data.decode()
+
         if isinstance(data, list):
             return [self._clean_data(d) for d in data]
 
