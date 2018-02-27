@@ -1,12 +1,11 @@
 sudo: false
 language: python
 python:
-  - "2.7"
   - "3.6"
 cache: pip
 env:
-  - TOX_ENV=py27-flake8
-  - TOX_ENV=py27-docs
+  - TOX_ENV=py36-flake8
+  - TOX_ENV=py36-docs
   - TOX_ENV=py36-django2.0-drf3.7 DATABASE_URL=sqlite://
   - TOX_ENV=py36-django2.0-drf3.7 DATABASE_URL=mysql://root:@localhost/test_db
   - TOX_ENV=py36-django2.0-drf3.7 DATABASE_URL=postgres://postgres@/test_db
