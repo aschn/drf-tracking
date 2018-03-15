@@ -24,6 +24,14 @@ class TestAPIRequestLog(TestCase):
                                            requested_at=now())
         self.assertEqual(log.user, self.user)
 
+    def test_delete_user(self):
+        log = APIRequestLog.objects.create(user=self.user, remote_addr=self.ip,
+                                           requested_at=now())
+        self.assertEqual(log.user, self.user)
+        self.user.delete()
+        log.refresh_from_db()
+        self.assertIsNone(log.user)
+
     def test_create_timestamp(self):
         before = now()
         log = APIRequestLog.objects.create(remote_addr=self.ip, requested_at=now())
