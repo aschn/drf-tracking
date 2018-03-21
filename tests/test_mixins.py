@@ -323,7 +323,7 @@ class TestLoggingMixin(APITestCase):
     def test_no_log_view_name(self):
         self.client.post('/view-log')
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.view, '')
+        self.assertIsNone(log.view)
 
     def test_log_view_name_generic_viewset(self):
         self.client.get('/view-log')
@@ -338,7 +338,7 @@ class TestLoggingMixin(APITestCase):
     def test_no_log_view_method_name(self):
         self.client.post('/view-log')
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.view_method, '')
+        self.assertIsNone(log.view_method)
 
     def test_log_view_method_name_generic_viewset(self):
         self.client.get('/view-log')
