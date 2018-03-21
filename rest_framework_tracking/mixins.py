@@ -95,14 +95,14 @@ class BaseLoggingMixin(object):
             attributes = getattr(self, method)
             view_name = (type(attributes.__self__).__module__ + '.' +
                          type(attributes.__self__).__name__)
+            return view_name
         except AttributeError:
-            view_name = ''
-        return view_name
+            return None
 
     def _get_view_method(self, request):
         """Get view method."""
         if hasattr(self, 'action'):
-            return self.action if self.action else ''
+            return self.action if self.action else None
         return request.method.lower()
 
     def _get_user(self, request):
