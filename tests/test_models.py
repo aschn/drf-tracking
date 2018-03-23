@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.utils.timezone import now
+from django.utils.timezone import now, timedelta
 from rest_framework_tracking.models import APIRequestLog
 import pytest
 
@@ -33,9 +33,9 @@ class TestAPIRequestLog(TestCase):
         self.assertIsNone(log.user)
 
     def test_create_timestamp(self):
-        before = now()
+        before = now() - timedelta(seconds=1)
         log = APIRequestLog.objects.create(remote_addr=self.ip, requested_at=now())
-        after = now()
+        after = now() + timedelta(seconds=1)
 
         self.assertLess(log.requested_at, after)
         self.assertGreater(log.requested_at, before)
