@@ -66,7 +66,9 @@ class BaseLoggingMixin(object):
                     'data': self._clean_data(self.log['data'])
                 }
             )
-            if response.exception and not connection.in_atomic_block or not response.exception:
+            if not connection.settings_dict.get('ATOMIC_REQUESTS'):
+                self.handle_log()
+            elif response.exception and not connection.in_atomic_block or not response.exception:
                 self.handle_log()
             else:
                 # respone with exception (HTTP status like: 401, 404, etc)
