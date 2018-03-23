@@ -1,10 +1,13 @@
 import ast
+import logging
 import traceback
 
 from django.db import connection
 from django.utils.timezone import now
 
 from .models import APIRequestLog
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoggingMixin(object):
@@ -66,16 +69,21 @@ class BaseLoggingMixin(object):
                     'data': self._clean_data(self.log['data'])
                 }
             )
-            if not connection.settings_dict.get('ATOMIC_REQUESTS'):
-                self.handle_log()
-            elif response.exception and not connection.in_atomic_block or not response.exception:
-                self.handle_log()
-            else:
-                # respone with exception (HTTP status like: 401, 404, etc)
-                # pointwise disable atomic block for handle log (TransactionManagementError)
-                connection.in_atomic_block = False
-                self.handle_log()
-                connection.in_atomic_block = True
+            try:
+                if not connection.settings_dict.get('ATOMIC_REQUESTS'):
+                    self.handle_log()
+                elif response.exception and not connection.in_atomic_block or not response.exception:
+                    self.handle_log()
+                else:
+                    # respone with exception (HTTP status like: 401, 404, etc)
+                    # pointwise disable atomic block for handle log (TransactionManagementError)
+                    connection.in_atomic_block = False
+                    self.handle_log()
+                    connection.in_atomic_block = True
+            except Exception as e:
+                # ensure that all exceptions raised by handle_log
+                # doesn't prevent API call to continue as expected
+                logger.exception('Logging API call raise exception!')
 
         return response
 
