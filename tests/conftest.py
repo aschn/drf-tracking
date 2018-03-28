@@ -48,6 +48,8 @@ def pytest_configure():
             'django.contrib.auth.hashers.CryptPasswordHasher',
         ),
     )
+    settings.DATABASES['default']['ATOMIC_REQUESTS'] = True
+    settings.DATABASES['default']['AUTOCOMMIT'] = True
 
     try:
         import oauth_provider  # NOQA
