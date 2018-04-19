@@ -360,7 +360,7 @@ class TestLoggingMixin(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(APIRequestLog.objects.all().count(), 0)
 
-    @mock.patch('rest_framework_tracking.mixins.now')
+    @mock.patch('rest_framework_tracking.base_mixins.now')
     def test_log_doesnt_fail_with_negative_response_ms(self, mock_now):
         mock_now.side_effect = [
             datetime.datetime(2017, 12, 1, 10, 0, 10),
