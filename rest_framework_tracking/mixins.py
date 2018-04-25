@@ -1,7 +1,13 @@
 import ast
-from .models import APIRequestLog
-from django.utils.timezone import now
+import logging
 import traceback
+
+from django.db import connection
+from django.utils.timezone import now
+
+from .models import APIRequestLog
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoggingMixin(object):
@@ -63,11 +69,20 @@ class BaseLoggingMixin(object):
                 }
             )
             try:
-                self.handle_log()
-            except Exception:
+                if not connection.settings_dict.get('ATOMIC_REQUESTS'):
+                    self.handle_log()
+                elif response.exception and not connection.in_atomic_block or not response.exception:
+                    self.handle_log()
+                elif response.exception:
+                    # respone with exception (HTTP status like: 401, 404, etc)
+                    # pointwise disable atomic block for handle log (TransactionManagementError)
+                    connection.set_rollback(True)
+                    connection.set_rollback(False)
+                    self.handle_log()
+            except Exception as e:
                 # ensure that all exceptions raised by handle_log
                 # doesn't prevent API call to continue as expected
-                pass
+                logger.exception('Logging API call raise exception!')
 
         return response
 
@@ -94,14 +109,14 @@ class BaseLoggingMixin(object):
             attributes = getattr(self, method)
             view_name = (type(attributes.__self__).__module__ + '.' +
                          type(attributes.__self__).__name__)
+            return view_name
         except AttributeError:
-            view_name = ''
-        return view_name
+            return None
 
     def _get_view_method(self, request):
         """Get view method."""
         if hasattr(self, 'action'):
-            return self.action if self.action else ''
+            return self.action if self.action else None
         return request.method.lower()
 
     def _get_user(self, request):

@@ -20,6 +20,9 @@ class MockLoggingView(LoggingMixin, APIView):
     def get(self, request):
         return Response('with logging')
 
+    def post(self, request):
+        return Response('with logging')
+
 
 class MockSlowLoggingView(LoggingMixin, APIView):
     def get(self, request):
