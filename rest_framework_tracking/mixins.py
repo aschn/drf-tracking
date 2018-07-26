@@ -64,7 +64,7 @@ class BaseLoggingMixin(object):
                     'query_params': self._clean_data(request.query_params.dict()),
                     'user': self._get_user(request),
                     'response_ms': self._get_response_ms(),
-                    'response': response.rendered_content if 'rendered_content' in response.__dict__ else response.getvalue(),
+                    'response': response.rendered_content if hasattr(response, 'rendered_content') else response.getvalue(),
                     'status_code': response.status_code,
                     'data': self._clean_data(self.log['data'])
                 }
