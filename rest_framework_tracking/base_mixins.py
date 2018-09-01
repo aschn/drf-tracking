@@ -124,7 +124,10 @@ class BaseLoggingMixin(object):
     def _get_user(self, request):
         """Get user."""
         user = request.user
-        if not user.is_authenticated:
+        is_anonymous_user = user.is_anonymous
+        if type(is_anonymous_user) != bool:
+            is_anonymous_user = is_anonymous_user()
+        if is_anonymous_user:
             return None
         return user
 
