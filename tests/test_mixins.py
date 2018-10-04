@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import pytest
 import ast
 import datetime
+import json
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 from django.test.utils import override_settings
@@ -164,11 +165,12 @@ class TestLoggingMixin(APITestCase):
     def test_log_unauth_fails(self):
         # set up request without auth
         self.client.logout()
-        self.client.get('/session-auth-logging')
+        response = self.client.get('/session-auth-logging')
 
         # test
         log = APIRequestLog.objects.first()
-        self.assertEqual(log.response, '{"detail":"Authentication credentials were not provided."}')
+        self.assertEqual(status.HTTP_403_FORBIDDEN, log.status_code)
+        self.assertEqual(json.loads(log.response), response.json())
 
     def test_log_params(self):
         self.client.get('/logging', {'p1': 'a', 'another': '2'})
@@ -259,15 +261,6 @@ class TestLoggingMixin(APITestCase):
                          u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
                          u'capitalized': '12345',
                          u'my_field': BaseLoggingMixin.CLEANED_SUBSTITUTE})
-
-    def test_log_params_cleaned_from_personal_list_nested(self):
-        self.client.get('/sensitive-fields-logging',
-                        {'api': '1234', 'var1': {'api': '4321'}})
-        log = APIRequestLog.objects.first()
-        self.assertEqual(ast.literal_eval(log.query_params), {
-                         u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
-                         u'var1': {u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}
-                         })
 
     def test_invalid_cleaned_substitute_fails(self):
         with self.assertRaises(AssertionError):

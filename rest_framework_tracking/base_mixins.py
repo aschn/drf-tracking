@@ -26,7 +26,7 @@ class BaseLoggingMixin(object):
     def initial(self, request, *args, **kwargs):
         self.log = {}
         self.log['requested_at'] = now()
-        self.log['data'] = request.body
+        self.log['data'] = self._clean_data(request.body)
 
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
 
@@ -38,7 +38,7 @@ class BaseLoggingMixin(object):
             data = self.request.data.dict()
         except AttributeError:
             data = self.request.data
-        self.log['data'] = data
+        self.log['data'] = self._clean_data(data)
 
     def handle_exception(self, exc):
         response = super(BaseLoggingMixin, self).handle_exception(exc)
@@ -53,6 +53,10 @@ class BaseLoggingMixin(object):
         should_log = self._should_log if hasattr(self, '_should_log') else self.should_log
 
         if should_log(request, response):
+            if hasattr(response, 'rendered_content'):
+                rendered_content = response.rendered_content
+            else:
+                rendered_content = response.getvalue()
 
             self.log.update(
                 {
@@ -65,9 +69,8 @@ class BaseLoggingMixin(object):
                     'query_params': self._clean_data(request.query_params.dict()),
                     'user': self._get_user(request),
                     'response_ms': self._get_response_ms(),
-                    'response': response.rendered_content if hasattr(response, 'rendered_content') else response.getvalue(),
+                    'response': self._clean_data(rendered_content),
                     'status_code': response.status_code,
-                    'data': self._clean_data(self.log['data'])
                 }
             )
             try:
@@ -81,7 +84,7 @@ class BaseLoggingMixin(object):
                     connection.set_rollback(True)
                     connection.set_rollback(False)
                     self.handle_log()
-            except Exception as e:
+            except Exception:
                 # ensure that all exceptions raised by handle_log
                 # doesn't prevent API call to continue as expected
                 logger.exception('Logging API call raise exception!')
@@ -124,10 +127,7 @@ class BaseLoggingMixin(object):
     def _get_user(self, request):
         """Get user."""
         user = request.user
-        is_anonymous_user = user.is_anonymous
-        if type(is_anonymous_user) != bool:
-            is_anonymous_user = is_anonymous_user()
-        if is_anonymous_user:
+        if user.is_anonymous:
             return None
         return user
 
@@ -159,9 +159,11 @@ class BaseLoggingMixin(object):
         You can define your own sensitive fields in your view by defining a set
         eg: sensitive_fields = {'field1', 'field2'}
         """
+        if isinstance(data, bytes):
+            data = data.decode()
+
         if isinstance(data, list):
             return [self._clean_data(d) for d in data]
-
         if isinstance(data, dict):
             SENSITIVE_FIELDS = {'api', 'token', 'key', 'secret', 'password', 'signature'}
 
