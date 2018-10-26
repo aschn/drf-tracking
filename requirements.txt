@@ -9,7 +9,7 @@ pytest>=2.7
 pytest-cov>=1.8
 flaky>=3.3.0
 flake8>=2.4
-coveralls==1.2.0
+coveralls
 
 # wheel for PyPI installs
 wheel>=0.24
