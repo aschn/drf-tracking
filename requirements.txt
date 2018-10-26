@@ -18,3 +18,4 @@ wheel>=0.24
 mkdocs>=0.13
 
 mock
+elasticsearch

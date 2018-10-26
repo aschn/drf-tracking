@@ -2,11 +2,9 @@ import ast
 import logging
 import traceback
 
+from django.conf import settings
 from django.db import connection
 from django.utils.timezone import now
-
-logger = logging.getLogger(__name__)
-
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +22,9 @@ class BaseLoggingMixin(object):
         super(BaseLoggingMixin, self).__init__(*args, **kwargs)
 
     def initial(self, request, *args, **kwargs):
+        self.elasticsearch_enabled = hasattr(settings, 'DRF_TRACKING_ELASTIC_CONFIG')
+        self.log_request_data = getattr(settings, 'DRF_TRACKING_LOG_REQUEST_DATA', True)
+
         self.log = {}
         self.log['requested_at'] = now()
         self.log['data'] = self._clean_data(request.body)
@@ -67,7 +68,7 @@ class BaseLoggingMixin(object):
                     'host': request.get_host(),
                     'method': request.method,
                     'query_params': self._clean_data(request.query_params.dict()),
-                    'user': self._get_user(request),
+                    'user_id': self._get_user_id(request),
                     'response_ms': self._get_response_ms(),
                     'response': self._clean_data(rendered_content),
                     'status_code': response.status_code,
@@ -112,8 +113,7 @@ class BaseLoggingMixin(object):
         method = request.method.lower()
         try:
             attributes = getattr(self, method)
-            view_name = (type(attributes.__self__).__module__ + '.' +
-                         type(attributes.__self__).__name__)
+            view_name = type(attributes.__self__).__module__ + '.' + type(attributes.__self__).__name__
             return view_name
         except AttributeError:
             return None
@@ -124,12 +124,12 @@ class BaseLoggingMixin(object):
             return self.action if self.action else None
         return request.method.lower()
 
-    def _get_user(self, request):
+    def _get_user_id(self, request):
         """Get user."""
         user = request.user
         if user.is_anonymous:
             return None
-        return user
+        return user.id
 
     def _get_response_ms(self):
         """

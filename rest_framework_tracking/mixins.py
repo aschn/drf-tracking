@@ -1,4 +1,5 @@
 from .base_mixins import BaseLoggingMixin
+from .elastic_client import ElasticClient
 from .models import APIRequestLog
 
 
@@ -9,7 +10,11 @@ class LoggingMixin(BaseLoggingMixin):
 
         Defaults on saving the data on the db.
         """
-        APIRequestLog(**self.log).save()
+        if self.elasticsearch_enabled:
+            elastic = ElasticClient()
+            elastic.add_api_log(self.log)
+        else:
+            APIRequestLog(**self.log).save()
 
 
 class LoggingErrorsMixin(LoggingMixin):
