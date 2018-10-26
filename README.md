@@ -3,6 +3,7 @@
 [![build-status-image]][travis]
 [![pypi-version]][pypi]
 [![Requirements Status](https://requires.io/github/aschn/drf-tracking/requirements.svg?branch=master)](https://requires.io/github/aschn/drf-tracking/requirements/?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/aschn/drf-tracking/badge.svg?branch=master)](https://coveralls.io/github/aschn/drf-tracking?branch=master)
 
 ## Overview
 
