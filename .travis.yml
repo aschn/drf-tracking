@@ -1,159 +1,70 @@
-sudo: false
 language: python
-python:
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
 cache: pip
-env:
-  - TOX_ENV=py27-flake8
-  - TOX_ENV=py27-docs
-  - TOX_ENV=py27-django1.8-drf3.0 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.8-drf3.0 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.8-drf3.0 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py33-django1.8-drf3.0 DATABASE_URL=sqlite://
-  - TOX_ENV=py33-django1.8-drf3.0 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py33-django1.8-drf3.0 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.8-drf3.0 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.8-drf3.0 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.8-drf3.0 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.8-drf3.0 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.8-drf3.0 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.8-drf3.0 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.8-drf3.1 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.8-drf3.1 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.8-drf3.1 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py33-django1.8-drf3.1 DATABASE_URL=sqlite://
-  - TOX_ENV=py33-django1.8-drf3.1 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py33-django1.8-drf3.1 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.8-drf3.1 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.8-drf3.1 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.8-drf3.1 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.8-drf3.1 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.8-drf3.1 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.8-drf3.1 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.8-drf3.2 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.8-drf3.2 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.8-drf3.2 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py33-django1.8-drf3.2 DATABASE_URL=sqlite://
-  - TOX_ENV=py33-django1.8-drf3.2 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py33-django1.8-drf3.2 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.8-drf3.2 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.8-drf3.2 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.8-drf3.2 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.8-drf3.2 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.8-drf3.2 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.8-drf3.2 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.8-drf3.3 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.8-drf3.3 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.8-drf3.3 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py33-django1.8-drf3.3 DATABASE_URL=sqlite://
-  - TOX_ENV=py33-django1.8-drf3.3 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py33-django1.8-drf3.3 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.8-drf3.3 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.8-drf3.3 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.8-drf3.3 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.8-drf3.3 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.8-drf3.3 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.8-drf3.3 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.8-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.8-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.8-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py33-django1.8-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py33-django1.8-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py33-django1.8-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.8-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.8-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.8-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.8-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.8-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.8-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.8-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.8-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.8-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py33-django1.8-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py33-django1.8-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py33-django1.8-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.8-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.8-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.8-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.8-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.8-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.8-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.9-drf3.3 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.9-drf3.3 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.9-drf3.3 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.9-drf3.3 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.9-drf3.3 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.9-drf3.3 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.9-drf3.3 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.9-drf3.3 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.9-drf3.3 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.9-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.9-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.9-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.9-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.9-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.9-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.9-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.9-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.9-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.9-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.9-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.9-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.9-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.9-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.9-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.9-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.9-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.9-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.10-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.10-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.10-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.10-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.10-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.10-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.10-drf3.4 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.10-drf3.4 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.10-drf3.4 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.10-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.10-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.10-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.10-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.10-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.10-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.10-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.10-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.10-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.11-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.11-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.11-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.11-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.11-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.11-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.11-drf3.5 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.11-drf3.5 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.11-drf3.5 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py27-django1.11-drf3.6 DATABASE_URL=sqlite://
-  - TOX_ENV=py27-django1.11-drf3.6 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py27-django1.11-drf3.6 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py34-django1.11-drf3.6 DATABASE_URL=sqlite://
-  - TOX_ENV=py34-django1.11-drf3.6 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py34-django1.11-drf3.6 DATABASE_URL=postgres://postgres@/test_db
-  - TOX_ENV=py35-django1.11-drf3.6 DATABASE_URL=sqlite://
-  - TOX_ENV=py35-django1.11-drf3.6 DATABASE_URL=mysql://root:@localhost/test_db
-  - TOX_ENV=py35-django1.11-drf3.6 DATABASE_URL=postgres://postgres@/test_db
+
+sudo: false
+
 matrix:
   fast_finish: true
+  include:
+    - { python: "2.7", env: DJANGO=1.11 DRF=3.5 }
+    - { python: "2.7", env: DJANGO=1.11 DRF=3.6 }
+    - { python: "2.7", env: DJANGO=1.11 DRF=3.7 }
+    - { python: "2.7", env: DJANGO=1.11 DRF=3.8 }
+    - { python: "2.7", env: DJANGO=1.11 DRF=3.9 }
+
+    - { python: "3.4", env: DJANGO=1.11 DRF=3.5 }
+    - { python: "3.4", env: DJANGO=1.11 DRF=3.6 }
+    - { python: "3.4", env: DJANGO=1.11 DRF=3.7 }
+    - { python: "3.4", env: DJANGO=1.11 DRF=3.8 }
+    - { python: "3.4", env: DJANGO=1.11 DRF=3.9 }
+    - { python: "3.4", env: DJANGO=2.0 DRF=3.7 }
+    - { python: "3.4", env: DJANGO=2.0 DRF=3.8 }
+    - { python: "3.4", env: DJANGO=2.0 DRF=3.9 }
+
+    - { python: "3.5", env: DJANGO=1.11 DRF=3.5 }
+    - { python: "3.5", env: DJANGO=1.11 DRF=3.6 }
+    - { python: "3.5", env: DJANGO=1.11 DRF=3.7 }
+    - { python: "3.5", env: DJANGO=1.11 DRF=3.8 }
+    - { python: "3.5", env: DJANGO=1.11 DRF=3.9 }
+    - { python: "3.5", env: DJANGO=2.0 DRF=3.7 }
+    - { python: "3.5", env: DJANGO=2.0 DRF=3.8 }
+    - { python: "3.5", env: DJANGO=2.0 DRF=3.9 }
+    - { python: "3.5", env: DJANGO=2.1 DRF=3.7 }
+    - { python: "3.5", env: DJANGO=2.1 DRF=3.8 }
+    - { python: "3.5", env: DJANGO=2.1 DRF=3.9 }
+
+    - { python: "3.6", env: DJANGO=1.11 DRF=3.5 }
+    - { python: "3.6", env: DJANGO=1.11 DRF=3.6 }
+    - { python: "3.6", env: DJANGO=1.11 DRF=3.7 }
+    - { python: "3.6", env: DJANGO=1.11 DRF=3.8 }
+    - { python: "3.6", env: DJANGO=1.11 DRF=3.9 }
+    - { python: "3.6", env: DJANGO=2.0 DRF=3.7 }
+    - { python: "3.6", env: DJANGO=2.0 DRF=3.8 }
+    - { python: "3.6", env: DJANGO=2.0 DRF=3.9 }
+    - { python: "3.6", env: DJANGO=2.1 DRF=3.7 }
+    - { python: "3.6", env: DJANGO=2.1 DRF=3.8 }
+    - { python: "3.6", env: DJANGO=2.1 DRF=3.9 }
+
+    - { python: "3.7", env: DJANGO=2.0 DRF=3.7, dist: xenial, sudo: true }
+    - { python: "3.7", env: DJANGO=2.0 DRF=3.8, dist: xenial, sudo: true }
+    - { python: "3.7", env: DJANGO=2.0 DRF=3.9, dist: xenial, sudo: true }
+    - { python: "3.7", env: DJANGO=2.1 DRF=3.7, dist: xenial, sudo: true }
+    - { python: "3.7", env: DJANGO=2.1 DRF=3.8, dist: xenial, sudo: true }
+    - { python: "3.7", env: DJANGO=2.1 DRF=3.9, dist: xenial, sudo: true }
+
+    - { python: "2.7", env: TOXENV=py27-flake8 }
+
 install:
+  - pip install tox-travis
   - pip install -r requirements.txt
-  - pip install tox python-coveralls psycopg2 mysqlclient
 script:
-  - tox -e $TOX_ENV
-  - coverage run runtests.py
-after_success:
-  coveralls
+  - tox
+
+after_script:
+  - pip install pytest pytest-cov
+  - coverage run -m pytest
+  - coveralls
+
 deploy:
   provider: pypi
   user: avelis
