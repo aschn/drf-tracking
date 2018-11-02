@@ -55,14 +55,13 @@ matrix:
     - { python: "2.7", env: TOXENV=py27-flake8 }
 
 install:
-  - pip install tox-travis
+  - pip install tox-travis python-coveralls
   - pip install -r requirements.txt
 script:
   - tox
 
-after_script:
-  - pip install pytest pytest-cov
-  - coverage run -m pytest
+after_success:
+  - coverage run runtests.py --nolint
   - coveralls
 
 deploy:
