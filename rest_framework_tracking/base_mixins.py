@@ -112,8 +112,7 @@ class BaseLoggingMixin(object):
         method = request.method.lower()
         try:
             attributes = getattr(self, method)
-            view_name = (type(attributes.__self__).__module__ + '.' +
-                         type(attributes.__self__).__name__)
+            view_name = type(attributes.__self__).__module__ + '.' + type(attributes.__self__).__name__
             return view_name
         except AttributeError:
             return None
