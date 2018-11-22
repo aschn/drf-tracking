@@ -26,7 +26,7 @@ class BaseLoggingMixin(object):
     def initial(self, request, *args, **kwargs):
         self.log = {}
         self.log['requested_at'] = now()
-        self.log['data'] = self._clean_data(request.body)
+        # self.log['data'] = self._clean_data(request.body)
 
         super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
 
