@@ -151,6 +151,11 @@ class MockJSONLoggingView(LoggingMixin, APIView):
         return Response({'post': 'response'})
 
 
+class MockMultipartLoggingView(LoggingMixin, APIView):
+    def post(self, request):
+        return Response({'post': 'response'})
+
+
 class MockValidationErrorLoggingView(LoggingMixin, APIView):
     def get(self, request):
         raise serializers.ValidationError('bad input')
