@@ -157,7 +157,7 @@ class BaseLoggingMixin(object):
         eg: sensitive_fields = {'field1', 'field2'}
         """
         if isinstance(data, bytes):
-            data = data.decode('utf-8',errors='replace')
+            data = data.decode('utf-8', errors='replace')
 
         if isinstance(data, list):
             return [self._clean_data(d) for d in data]
