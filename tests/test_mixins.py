@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import pytest
 import ast
 import datetime
+from io import BytesIO
 import json
 from django.contrib.auth.models import User
 from django.utils.timezone import now
@@ -278,6 +279,23 @@ class TestLoggingMixin(APITestCase):
 
     def test_log_json_post_response(self):
         self.client.post('/json-logging', {}, format='json')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.response, u'{"post":"response"}')
+
+    def test_log_multipart_post_response(self):
+        self.client.post('/multipart-logging', {}, format='multipart')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.response, u'{"post":"response"}')
+
+    def test_log_multipart_utf8_encoded_file_post_response(self):
+        file = BytesIO('test data'.encode('utf-8'))
+        self.client.post('/multipart-logging', {'file': file}, format='multipart')
+        log = APIRequestLog.objects.first()
+        self.assertEqual(log.response, u'{"post":"response"}')
+
+    def test_log_multipart_utf16_encoded_file_post_response(self):
+        file = BytesIO('test data'.encode('utf-16'))
+        self.client.post('/multipart-logging', {'file': file}, format='multipart')
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response, u'{"post":"response"}')
 
