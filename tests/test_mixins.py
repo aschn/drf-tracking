@@ -299,6 +299,12 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.response, u'{"post":"response"}')
 
+    def test_log_streaming(self):
+        response = self.client.get('/streaming-logging')
+        self.assertEqual(response.getvalue(), b'ab')  # iterator was not consumed by logging
+        log = APIRequestLog.objects.first()
+        self.assertIs(log.response, None)
+
     def test_log_status_validation_error(self):
         self.client.get('/validation-error-logging')
         log = APIRequestLog.objects.first()

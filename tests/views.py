@@ -1,3 +1,4 @@
+from django.http.response import StreamingHttpResponse
 from django.shortcuts import get_list_or_404
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -154,6 +155,11 @@ class MockJSONLoggingView(LoggingMixin, APIView):
 class MockMultipartLoggingView(LoggingMixin, APIView):
     def post(self, request):
         return Response({'post': 'response'})
+
+
+class MockStreamingLoggingView(LoggingMixin, APIView):
+    def get(self, request):
+        return StreamingHttpResponse(iter([b'a', b'b']))
 
 
 class MockValidationErrorLoggingView(LoggingMixin, APIView):

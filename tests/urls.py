@@ -22,6 +22,7 @@ urlpatterns = [
     url(r'^token-auth-logging$', test_views.MockTokenAuthLoggingView.as_view()),
     url(r'^json-logging$', test_views.MockJSONLoggingView.as_view()),
     url(r'^multipart-logging$', test_views.MockMultipartLoggingView.as_view()),
+    url(r'^streaming-logging$', test_views.MockStreamingLoggingView.as_view()),
     url(r'^validation-error-logging$', test_views.MockValidationErrorLoggingView.as_view()),
     url(r'^404-error-logging$', test_views.Mock404ErrorLoggingView.as_view()),
     url(r'^500-error-logging$', test_views.Mock500ErrorLoggingView.as_view()),
