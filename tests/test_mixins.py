@@ -382,6 +382,6 @@ class TestLoggingMixin(APITestCase):
         self.assertEqual(log.response_ms, 0)
 
     def test_custom_log_handler(self):
-            self.client.get('/custom-log-handler')
-            self.client.post('/custom-log-handler')
-            self.assertEqual(APIRequestLog.objects.all().count(), 1)
+        self.client.get('/custom-log-handler')
+        self.client.post('/custom-log-handler')
+        self.assertEqual(APIRequestLog.objects.all().count(), 1)
