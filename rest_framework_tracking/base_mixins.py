@@ -77,15 +77,12 @@ class BaseLoggingMixin(object):
                 if not connection.settings_dict.get('ATOMIC_REQUESTS'):
                     self.handle_log()
                 else:
-                    response_exception = getattr(response, 'exception', None)
-                    if response_exception and not connection.in_atomic_block or not response_exception:
-                        self.handle_log()
-                    elif response_exception:
+                    if getattr(response, 'exception', None) and connection.in_atomic_block:
                         # response with exception (HTTP status like: 401, 404, etc)
                         # pointwise disable atomic block for handle log (TransactionManagementError)
                         connection.set_rollback(True)
                         connection.set_rollback(False)
-                        self.handle_log()
+                    self.handle_log()
             except Exception:
                 # ensure that all exceptions raised by handle_log
                 # doesn't prevent API call to continue as expected
