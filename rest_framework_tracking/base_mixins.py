@@ -51,7 +51,9 @@ class BaseLoggingMixin(object):
         should_log = self._should_log if hasattr(self, '_should_log') else self.should_log
 
         if should_log(request, response):
-            if hasattr(response, 'rendered_content'):
+            if response.streaming:
+                rendered_content = None
+            elif hasattr(response, 'rendered_content'):
                 rendered_content = response.rendered_content
             else:
                 rendered_content = response.getvalue()
@@ -74,14 +76,16 @@ class BaseLoggingMixin(object):
             try:
                 if not connection.settings_dict.get('ATOMIC_REQUESTS'):
                     self.handle_log()
-                elif response.exception and not connection.in_atomic_block or not response.exception:
-                    self.handle_log()
-                elif response.exception:
-                    # respone with exception (HTTP status like: 401, 404, etc)
-                    # pointwise disable atomic block for handle log (TransactionManagementError)
-                    connection.set_rollback(True)
-                    connection.set_rollback(False)
-                    self.handle_log()
+                else:
+                    response_exception = getattr(response, 'exception', None)
+                    if response_exception and not connection.in_atomic_block or not response_exception:
+                        self.handle_log()
+                    elif response_exception:
+                        # response with exception (HTTP status like: 401, 404, etc)
+                        # pointwise disable atomic block for handle log (TransactionManagementError)
+                        connection.set_rollback(True)
+                        connection.set_rollback(False)
+                        self.handle_log()
             except Exception:
                 # ensure that all exceptions raised by handle_log
                 # doesn't prevent API call to continue as expected
