@@ -10,7 +10,8 @@ class BaseAPIRequestLog(models.Model):
     """ Logs Django rest framework API requests """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL, null=True,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
     )
     requested_at = models.DateTimeField(db_index=True)
