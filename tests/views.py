@@ -213,14 +213,6 @@ class MockUserViewSet(LoggingMixin, viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def retrieve(self, request, *args, **kwargs):
-        print("retrieve")
-        return super().retrieve(request)
-
-    def list(self, request, *args, **kwargs):
-        print("list")
-        return super().list(request)
-
 
 class Mock400BodyParseErrorLoggingView(LoggingMixin, APIView):
     def post(self, request):
