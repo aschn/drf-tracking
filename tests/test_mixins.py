@@ -182,9 +182,9 @@ class TestLoggingMixin(APITestCase):
         self.client.get('/logging', {'password': '1234', 'key': '12345', 'secret': '123456'})
         log = APIRequestLog.objects.first()
         self.assertEqual(ast.literal_eval(log.query_params), {
-                         u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
-                         u'key': BaseLoggingMixin.CLEANED_SUBSTITUTE,
-                         u'secret': BaseLoggingMixin.CLEANED_SUBSTITUTE})
+            u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+            u'key': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+            u'secret': BaseLoggingMixin.CLEANED_SUBSTITUTE})
 
     def test_log_data_empty(self):
         """Default payload is string {}"""
@@ -216,9 +216,9 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         expected_data = frozenset({  # keys could be either way round
             str({u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
-                u'val2': [{u'val': u'b'}]}),
+                 u'val2': [{u'val': u'b'}]}),
             str({u'val2': [{u'val': u'b'}],
-                u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
+                 u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
         })
         self.assertIn(log.data, expected_data)
 
@@ -228,9 +228,9 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         expected_data = frozenset({  # keys could be either way round
             str({u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
-                u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}]}),
+                 u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}]}),
             str({u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}],
-                u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
+                 u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
         })
         self.assertIn(log.data, expected_data)
 
@@ -240,9 +240,9 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         expected_data = frozenset({  # keys could be either way round
             str({u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE,
-                u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}]}),
+                 u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}]}),
             str({u'val2': [{u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE}],
-                u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
+                 u'password': BaseLoggingMixin.CLEANED_SUBSTITUTE}),
         })
         self.assertIn(log.data, expected_data)
 
@@ -250,18 +250,26 @@ class TestLoggingMixin(APITestCase):
         self.client.get('/logging', {'api': '1234', 'capitalized': '12345', 'keyword': '123456'})
         log = APIRequestLog.objects.first()
         self.assertEqual(ast.literal_eval(log.query_params), {
-                         u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
-                         u'capitalized': '12345',
-                         u'keyword': '123456'})
+            u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+            u'capitalized': '12345',
+            u'keyword': '123456'})
+
+    def test_log_with_exception(self):
+        self.client.get('/logging-exception', {'api': '1234', 'capitalized': '12345', 'keyword': '123456'})
+        log = APIRequestLog.objects.first()
+        self.assertEqual(ast.literal_eval(log.query_params), {
+            u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+            u'capitalized': '12345',
+            u'keyword': '123456'})
 
     def test_log_params_cleaned_from_personal_list(self):
         self.client.get('/sensitive-fields-logging',
                         {'api': '1234', 'capitalized': '12345', 'my_field': '123456'})
         log = APIRequestLog.objects.first()
         self.assertEqual(ast.literal_eval(log.query_params), {
-                         u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
-                         u'capitalized': '12345',
-                         u'my_field': BaseLoggingMixin.CLEANED_SUBSTITUTE})
+            u'api': BaseLoggingMixin.CLEANED_SUBSTITUTE,
+            u'capitalized': '12345',
+            u'my_field': BaseLoggingMixin.CLEANED_SUBSTITUTE})
 
     def test_invalid_cleaned_substitute_fails(self):
         with self.assertRaises(AssertionError):
@@ -356,6 +364,51 @@ class TestLoggingMixin(APITestCase):
         self.client.post('/view-log')
         log = APIRequestLog.objects.first()
         self.assertIsNone(log.view_method)
+
+    def test_get_user(self):
+        self.client.get('/user/', {"id": 1})
+        log = APIRequestLog.objects.first()
+        self.assertIsNotNone(log.view_method)
+        self.assertEqual(ast.literal_eval(log.query_params), {u"id": u'1'})
+
+    def test_delete_user(self):
+        self.client.delete('/user/1/', {"id": 1})
+        log = APIRequestLog.objects.first()
+        self.assertEqual("destroy", log.view_method)
+        self.assertEqual(ast.literal_eval(log.query_params), {u"id": u'1'})
+
+    def test_patch_user(self):
+        self.client.patch('/user/1/', {"username": 'fred'})
+        log = APIRequestLog.objects.first()
+        self.assertEqual("partial_update", log.view_method)
+        self.assertEqual(ast.literal_eval(log.query_params), {u"username": u'fred'})
+
+    def test_post_user(self):
+        self.client.post('/user/',
+                         {"username": 'fred', "first_name": "fred", "last_name": "jones", "email": "test@test.com"})
+        log = APIRequestLog.objects.first()
+        self.assertEqual("create6", log.view_method)
+        self.assertEqual(ast.literal_eval(log.query_params), {'email': 'test@test.com',
+                                                              'first_name': 'fred',
+                                                              'last_name': 'jones',
+                                                              'username': 'fred'})
+
+    def test_put_user(self):
+        self.client.put('/user/1/',
+                        {"pk": 1, "username": 'fred', "first_name": "fred", "last_name": "jones",
+                         "email": "test@test.com"})
+        log = APIRequestLog.objects.first()
+        self.assertEqual('update', log.view_method)
+        self.assertEqual(ast.literal_eval(log.query_params), {'pk': '1', 'email': 'test@test.com',
+                                                              'first_name': 'fred',
+                                                              'last_name': 'jones',
+                                                              'username': 'fred'})
+
+    def test_get_user_not_exist(self):
+        self.client.get('/user/', {"id": 100})
+        log = APIRequestLog.objects.first()
+        self.assertIsNotNone(log.view_method)
+        self.assertEqual(ast.literal_eval(log.query_params), {u"id": u'100'})
 
     def test_log_view_method_name_generic_viewset(self):
         self.client.get('/view-log')

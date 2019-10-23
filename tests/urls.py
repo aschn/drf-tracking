@@ -2,12 +2,18 @@
 from __future__ import absolute_import
 
 from django.conf.urls import url
+from django.urls import include, path
 
 from . import views as test_views
+
+from rest_framework.routers import DefaultRouter
+router = DefaultRouter()
+router.register(r'user', test_views.MockUserViewSet)
 
 urlpatterns = [
     url(r'^no-logging$', test_views.MockNoLoggingView.as_view()),
     url(r'^logging$', test_views.MockLoggingView.as_view()),
+    url(r'^logging-exception$', test_views.MockLoggingView.as_view()),
     url(r'^slow-logging$', test_views.MockSlowLoggingView.as_view()),
     url(r'^explicit-logging$', test_views.MockExplicitLoggingView.as_view()),
     url(r'^sensitive-fields-logging$', test_views.MockSensitiveFieldsLoggingView.as_view()),
@@ -30,4 +36,5 @@ urlpatterns = [
     url(r'^no-view-log$', test_views.MockNameAPIView.as_view()),
     url(r'^view-log$', test_views.MockNameViewSet.as_view({'get': 'list'})),
     url(r'^400-body-parse-error-logging$', test_views.Mock400BodyParseErrorLoggingView.as_view()),
+    path(r'', include(router.urls))
 ]

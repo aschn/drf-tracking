@@ -73,6 +73,8 @@ class BaseLoggingMixin(object):
                     'status_code': response.status_code,
                 }
             )
+            if self._clean_data(request.query_params.dict()) == {}:
+                self.log.update({'query_params': self.log['data']})
             try:
                 if not connection.settings_dict.get('ATOMIC_REQUESTS'):
                     self.handle_log()
