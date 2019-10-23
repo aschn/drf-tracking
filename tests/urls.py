@@ -1,16 +1,17 @@
 # coding=utf-8
 from __future__ import absolute_import
+from . import views as test_views
+from rest_framework.routers import DefaultRouter
+import django
 
 from django.conf.urls import url
-import django
+
 if django.VERSION[0] == 1:
     from django.conf.urls import include
 else:
     from django.urls import include
 
-from . import views as test_views
 
-from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 router.register(r'user', test_views.MockUserViewSet)
 
