@@ -387,7 +387,7 @@ class TestLoggingMixin(APITestCase):
         self.client.post('/user/',
                          {"username": 'fred', "first_name": "fred", "last_name": "jones", "email": "test@test.com"})
         log = APIRequestLog.objects.first()
-        self.assertEqual("create6", log.view_method)
+        self.assertEqual("create", log.view_method)
         self.assertEqual(ast.literal_eval(log.query_params), {'email': 'test@test.com',
                                                               'first_name': 'fred',
                                                               'last_name': 'jones',

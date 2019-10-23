@@ -6,7 +6,7 @@ djangorestframework>=3.5
 pytest-django
 django-environ
 pytest>=3.6
-pytest-cov<2.6
+pytest-cov>=2.6
 coveralls
 flaky
 flake8
