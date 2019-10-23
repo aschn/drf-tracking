@@ -2,7 +2,11 @@
 from __future__ import absolute_import
 
 from django.conf.urls import url
-from django.urls import include, path
+import django
+if django.VERSION[0] == 1:
+    from django.conf.urls import include
+else:
+    from django.urls import include
 
 from . import views as test_views
 
@@ -36,5 +40,5 @@ urlpatterns = [
     url(r'^no-view-log$', test_views.MockNameAPIView.as_view()),
     url(r'^view-log$', test_views.MockNameViewSet.as_view({'get': 'list'})),
     url(r'^400-body-parse-error-logging$', test_views.Mock400BodyParseErrorLoggingView.as_view()),
-    path(r'', include(router.urls))
+    url(r'', include(router.urls))
 ]
