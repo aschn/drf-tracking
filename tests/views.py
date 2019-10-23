@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.http.response import StreamingHttpResponse
 from django.shortcuts import get_list_or_404
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
@@ -8,7 +9,7 @@ from rest_framework import serializers, viewsets, mixins
 from rest_framework.exceptions import APIException
 from rest_framework_tracking.mixins import LoggingErrorsMixin, LoggingMixin
 from rest_framework_tracking.models import APIRequestLog
-from tests.test_serializers import ApiRequestLogSerializer
+from tests.test_serializers import ApiRequestLogSerializer, UserSerializer
 import time
 
 
@@ -22,6 +23,16 @@ class MockLoggingView(LoggingMixin, APIView):
         return Response('with logging')
 
     def post(self, request):
+        return Response('with logging')
+
+
+class MockLoggingExceptionView(LoggingMixin, APIView):
+    def get(self, request):
+        raise Exception('mock exception')
+        return Response('with logging')
+
+    def post(self, request):
+        raise Exception('mock exception')
         return Response('with logging')
 
 
@@ -81,7 +92,6 @@ class MockCustomCheckLoggingView(LoggingMixin, APIView):
 
 
 class MockCustomCheckLoggingWithLoggingMethodsView(LoggingMixin, APIView):
-
     logging_methods = ['POST']
 
     def should_log(self, request, response):
@@ -194,6 +204,22 @@ class MockNameViewSet(LoggingMixin, viewsets.GenericViewSet, mixins.ListModelMix
 
     queryset = APIRequestLog.objects.all()
     serializer_class = ApiRequestLogSerializer
+
+
+class MockUserViewSet(LoggingMixin, viewsets.ModelViewSet):
+    authentication_classes = ()
+    permission_classes = []
+
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        print("retrieve")
+        return super().retrieve(request)
+
+    def list(self, request, *args, **kwargs):
+        print("list")
+        return super().list(request)
 
 
 class Mock400BodyParseErrorLoggingView(LoggingMixin, APIView):
