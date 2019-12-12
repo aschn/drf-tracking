@@ -1,5 +1,5 @@
 # Minimum Django and REST framework version
-Django>=1.11
+Django>=3.0
 djangorestframework>=3.5
 
 # Test requirements

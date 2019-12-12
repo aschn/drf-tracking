@@ -1,11 +1,9 @@
 from django.db import models
 from django.conf import settings
-from django.utils.six import python_2_unicode_compatible
 
 from .managers import PrefetchUserManager
 
 
-@python_2_unicode_compatible
 class BaseAPIRequestLog(models.Model):
     """ Logs Django rest framework API requests """
     user = models.ForeignKey(
