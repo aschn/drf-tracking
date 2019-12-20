@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.utils.six import python_2_unicode_compatible
+from six import python_2_unicode_compatible
 
 from .managers import PrefetchUserManager
 
