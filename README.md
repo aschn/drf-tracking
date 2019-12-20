@@ -28,7 +28,7 @@ drf-tracking provides a Django model and DRF view mixin that work together to lo
 
 ## Requirements
 
-* Django 1.11, 2.0, 2.1
+* Django 1.11, 2.0, 2.1, 2.2, 3.0
 * Django REST Framework and Python release supporting the version of Django you are using
 
 Django | Python | DRF
@@ -36,6 +36,8 @@ Django | Python | DRF
 1.11 | 2.7, 3.4, 3.5, 3.6 | 3.5, 3.6, 3.7, 3.8, 3.9
 2.0 | 3.4, 3.5, 3.6, 3.7 | 3.7, 3.8, 3.9
 2.1 | 3.5, 3.6, 3.7 | 3.7, 3.8, 3.9
+2.2 | 3.5, 3.6, 3.7 | 3.7, 3.8, 3.9
+3.0 | 3.5, 3.6, 3.7 | 3.7, 3.8, 3.9
 
 ## Installation
 
