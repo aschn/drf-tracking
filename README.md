@@ -12,6 +12,7 @@ drf-tracking provides a Django model and DRF view mixin that work together to lo
  Model field name | Description | Model field type
 ------------------|-------------|-----------------
 `user` | User if authenticated, None if not | Foreign Key
+`username_persistent` | Static field that persists the username even if the User model object is deleted | CharField
 `requested_at` | Date-time that the request was made | DateTimeField
 `response_ms` | Number of milliseconds spent in view code | PositiveIntegerField
 `path` | Target URI of the request, e.g., `"/api/"` | CharField
@@ -152,6 +153,8 @@ You can complet this list with your own list by putting the fields you want to b
 class LoggingView(LoggingMixin, generics.CreateModelMixin, generics.GenericAPIView):
     sensitive_fields = {'my_secret_key', 'my_secret_recipe'}
 ```
+
+By default drf-tracking allows API request log entries to be modified from Django admin. This can present a data integrity issue in production environments. In order to change this behavior, you can set `DRF_TRACKING_ADMIN_LOG_READONLY` to `True` in your `settings.py` file.
 
 ## Testing
 
