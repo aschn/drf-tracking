@@ -15,7 +15,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='apirequestlog',
             name='username_persistent',
-            field=models.CharField(db_index=True, default='', max_length=200),
-            preserve_default=False,
+            field=models.CharField(
+                blank=True,
+                default='',
+                max_length=200,
+                null=True
+            )
         ),
     ]
