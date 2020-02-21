@@ -1,3 +1,7 @@
+# MIGRATION
+NOTE: this project has been forked to : https://github.com/lingster/drf-api-tracking where it is currently maintained and new releases will be pushed to pypi on a more frequent basis.
+Please submit PRs and other requests to this new location.
+
 # drf-tracking
 
 [![build-status-image]][travis]
