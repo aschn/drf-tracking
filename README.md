@@ -1,5 +1,5 @@
-# IMPORTANT: 
-Work has moved to a fork to continue on https://github.com/lingster/drf-api-tracking
+# PROJECT IS DEAD! PLEASE GO TO NEW LOCATION: 
+## Work has moved to a fork to continue on https://github.com/lingster/drf-api-tracking
 
 # drf-tracking
 
