@@ -14,6 +14,11 @@ class BaseAPIRequestLog(models.Model):
         null=True,
         blank=True,
     )
+    username_persistent = models.CharField(
+        max_length=getattr(settings, 'DRF_TRACKING_USERNAME_LENGTH', 200),
+        null=True,
+        blank=True,
+    )
     requested_at = models.DateTimeField(db_index=True)
     response_ms = models.PositiveIntegerField(default=0)
     path = models.CharField(
