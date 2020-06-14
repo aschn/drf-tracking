@@ -66,7 +66,7 @@ class BaseLoggingMixin(object):
                     'path': request.path,
                     'host': request.get_host(),
                     'method': request.method,
-                    'query_params': self._clean_data(request.query_params.dict()),
+                    'query_params': self._clean_data(request.query_params),
                     'user': self._get_user(request),
                     'response_ms': self._get_response_ms(),
                     'response': self._clean_data(rendered_content),
